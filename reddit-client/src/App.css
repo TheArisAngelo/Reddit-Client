@@ -661,6 +661,213 @@ body {
   transform: translateY(-2px);
 }
 
+.home-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-btn-alt {
+  background: linear-gradient(135deg, #ff6a00, #ff8f3d);
+  box-shadow: 0 12px 30px rgba(255, 106, 0, 0.28);
+}
+
+.create-page-title {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.create-top-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.create-layout {
+  position: relative;
+  z-index: 1;
+  max-width: 1500px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.create-card {
+  border-radius: 28px;
+  padding: 28px;
+  background: linear-gradient(
+    180deg,
+    rgba(11, 22, 37, 0.95),
+    rgba(8, 16, 28, 0.92)
+  );
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.create-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.create-field span {
+  color: #dfe9f8;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.create-field input,
+.create-field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(2, 6, 23, 0.45);
+  color: var(--text);
+  padding: 16px 18px;
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.create-field input::placeholder .create-field textarea::placeholder {
+  color: #7e92aa;
+}
+
+.create-field textarea {
+  resize: vertical;
+  min-height: 180px;
+}
+
+.create-input-wrap {
+  padding-right: 14px;
+}
+
+.create-success {
+  margin-bottom: 4px;
+  padding: 14px 15px;
+  border-radius: 16px;
+  font-size: 14px;
+  background: rgba(110, 231, 183, 0.12);
+  color: #baf5db;
+  border: 1px solid rgba(110, 231, 183, 0.18);
+}
+
+.create-submit-btn {
+  min-height: 56px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 15px;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 12px 30px rgba(255, 106, 0, 0.28);
+  transition: 0.2s ease;
+}
+
+.create-submit-btn:hover {
+  transform: translateY(-2px);
+}
+
+.create-preview-card {
+  position: sticky;
+  top: 24px;
+}
+
+.created-post-card {
+  margin-top: 14px;
+  padding: 22px;
+  border-radius: 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.03)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.created-post-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.created-post-community,
+.created-post-author {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.created-post-title {
+  margin: 0 0 14px;
+  font-size: 1.8rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.created-post-body {
+  margin: 0;
+  color: #dce6f2;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.created-post-image {
+  width: 100%;
+  margin-top: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  object-fit: cover;
+  max-height: 360px;
+}
+
+.created-posts-section {
+  position: relative;
+  z-index: 1;
+  max-width: 1500px;
+  margin: 28px auto 0;
+}
+
+.created-posts-header {
+  margin-bottom: 18px;
+}
+
+.created-posts-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+  letter-spacing: -0.03em;
+}
+
+.created-posts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.saved-post-card {
+  height: 100%;
+}
+
+.created-post-date {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     padding: 20px;
@@ -739,7 +946,6 @@ body {
   }
 }
 
-
 @media (max-width: 780px) {
   .profile-topbar {
     flex-direction: column;
@@ -751,7 +957,7 @@ body {
   }
 
   .profile-avatar-card,
-  .profile.intro-card,
+  .profile-intro-card,
   .profile-interests-card,
   .profile-education-card,
   .profile-wide-card {
@@ -781,5 +987,42 @@ body {
 
   .date-badge {
     min-width: auto;
+  }
+}
+
+@media (max-width: 980px) {
+  .create-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .create-preview-card {
+    position: static;
+  }
+
+  .create-top-actions {
+    width: 100%;
+  }
+
+  .create-top-actions .nav-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-nav-group {
+    width: 100%;
+  }
+
+  .create-card {
+    padding: 20px;
+  }
+
+  .create-top-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .create-top-actions .nav-btn {
+    width: 100%;
   }
 }

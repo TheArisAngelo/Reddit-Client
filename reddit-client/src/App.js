@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import "./App.css";
 import Profile from "./Profile";
+import CreatePage from "./CreatePage";
 
 const DEFAULT_SUBREDDITS = ["reactjs", "javascript", "webdev"];
 const STORAGE_KEY = "reddit-client-lanes";
@@ -316,9 +317,15 @@ function HomePage() {
         </div>
 
         <div className="header-side">
-          <Link to="/profile" className="nav-btn">
-            Profile Page
-          </Link>
+          <div className="home-nav-group">
+            <Link to="/profile" className="nav-btn">
+              Profile Page
+            </Link>
+            <Link to="/create" className="nav-btn nav-btn-alt">
+              Create Page
+            </Link>
+          </div>
+
           <AddLaneForm onAdd={addLane} isSubmitting={isAdding} />
         </div>
       </header>
@@ -342,6 +349,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/create" element={<CreatePage />} />
     </Routes>
   );
 }
