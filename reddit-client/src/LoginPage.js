@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./App.css";
 
-const USER_STORAGE_KEY = "reddit-client-auth";
+const USER_STORAGE_KEY = "reddit-client-user";
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -118,8 +118,7 @@ export default function LoginPage({ onLogin }) {
           </form>
 
           <p style={{ marginTop: "16px" }}>
-            No Account Yet
-            <Link to="/signup">Create one here</Link>
+            No Account Yet? <Link to="/signup">Create one here</Link>
           </p>
         </section>
       </main>
