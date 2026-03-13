@@ -868,6 +868,31 @@ body {
   font-size: 13px;
 }
 
+.login-layout {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.login-card {
+  max-width: 100%;
+}
+
+.auth-status {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.nav-btn-logout {
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: inherit;
+  background: linear-gradient(135deg, #ff5c7a, #ff7f96);
+  box-shadow: 0 12px 30px rgba(255, 92, 122, 0.28);
+}
 @media (max-width: 900px) {
   .app-shell {
     padding: 20px;

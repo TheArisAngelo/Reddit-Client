@@ -72,7 +72,9 @@ export default function CreatePage() {
       content,
       imageUrl,
       createdAt: new Date().toLocaleString(),
-      author: "u/TheArisAngelo",
+      author:
+        JSON.parse(localStorage.getItem("reddit-client-auth"))?.username ||
+        "TheArisAngelo",
     };
 
     const updatedPosts = [newPost, ...posts];
@@ -188,7 +190,11 @@ export default function CreatePage() {
           <article className="created-post-card">
             <div className="created-post-top">
               <p className="created-post-community">r/{previewSubreddit}</p>
-              <p className="created-post-author">Posted by u/TheArisAngelo</p>
+              <p className="created-post-author">
+                Posted by u/
+                {JSON.parse(localStorage.getItem("reddit-client-auth"))
+                  ?.username || "TheArisAngelo"}
+              </p>
             </div>
 
             <h2 className="created-post-title">
