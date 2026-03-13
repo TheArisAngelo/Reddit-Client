@@ -1,14 +1,28 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
 import "./App.css";
 import Profile from "./Profile";
 import CreatePage from "./CreatePage";
+import LoginPage from "./LoginPage";
+import SignUpPage from "./SignUpPage";
 
 const DEFAULT_SUBREDDITS = ["reactjs", "javascript", "webdev"];
 const STORAGE_KEY = "reddit-client-lanes";
+const AUTH_STORAGE_KEY = "reddit-client-auth";
 
 function normalizeSubredditName(value) {
   return value.replace(/^r\//i, "").trim().toLowerCase();
+}
+
+function getStoredAuth() {
+  const saved = localStorage.getItem(AUTH_STORAGE_KEY);
+
+  try {
+    const parsed = saved ? JSON.parse(saved) : null;
+    return parsed?.isLoggedIn ? parsed : { isLoggedIn: false, username: "" };
+  } catch (error) {
+    return { isLoggedIn: false, username: "" };
+  }
 }
 
 async function fetchSubredditPosts(subreddit) {
@@ -186,7 +200,15 @@ function Lane({ lane, onRemove, onRefresh }) {
   );
 }
 
-function HomePage() {
+function ProtectedRoute({ isLoggedIn, children }) {
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function HomePage({ auth, onLogout }) {
   const [lanes, setLanes] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -228,7 +250,6 @@ function HomePage() {
     if (lanes.length > 0) {
       loadInitialLanes();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lanes.length]);
 
   const refreshLane = async (subreddit) => {
@@ -316,14 +337,40 @@ function HomePage() {
           </p>
         </div>
 
+        <div className="auth-status">
+          {auth.isLoggedIn ? (
+            <span>
+              Logged in as <strong>{auth.username}</strong>
+            </span>
+          ) : (
+            <span>You are currently browsing as a guest.</span>
+          )}
+        </div>
+
         <div className="header-side">
           <div className="home-nav-group">
-            <Link to="/profile" className="nav-btn">
-              Profile Page
-            </Link>
-            <Link to="/create" className="nav-btn nav-btn-alt">
-              Create Page
-            </Link>
+            {!auth.isLoggedIn ? (
+              <>
+                <Link to="/login" className="nav-btn">
+                  Log In
+                </Link>
+                <Link to="/signup" className="nav-btn nav-btn-alt">
+                  Sign Up
+                </Link>
+              </>
+            ) : (
+              <>
+                <button className="nav-btn nav-btn-logout" onClick={onLogout}>
+                  Log Out
+                </button>
+                <Link to="/profile" className="nav-btn">
+                  Profile Page
+                </Link>
+                <Link to="/create" className="nav-btn nav-btn-alt">
+                  Create Page
+                </Link>
+              </>
+            )}
           </div>
 
           <AddLaneForm onAdd={addLane} isSubmitting={isAdding} />
@@ -345,11 +392,39 @@ function HomePage() {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState(getStoredAuth());
+
+  const handleLogin = (authData) => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+    setAuth(authData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setAuth({ isLoggedIn: false, username: "" });
+  };
+
+  useEffect(() => {
+    setAuth(getStoredAuth());
+  }, []);
+
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route
+        path="/"
+        element={<HomePage auth={auth} onLogout={handleLogout} />}
+      />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/create" element={<CreatePage />} />
+      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+      <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
+      <Route
+        path="/create"
+        element={
+          <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
+            <CreatePage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
