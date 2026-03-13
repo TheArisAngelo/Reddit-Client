@@ -7,7 +7,14 @@ import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
 import NewsPage from "./NewsPage";
 
-const DEFAULT_SUBREDDITS = ["reactjs", "javascript", "webdev"];
+const DEFAULT_SUBREDDITS = [
+  "reactjs",
+  "javascript",
+  "webdev",
+  "memes",
+  "dankmemes",
+  "ProgrammerHumor",
+];
 const STORAGE_KEY = "reddit-client-lanes";
 const AUTH_STORAGE_KEY = "reddit-client-auth";
 
@@ -26,36 +33,94 @@ function getStoredAuth() {
   }
 }
 
+function normalizeSearchInput(value) {
+  return value.trim().replace(/^r\//i, "");
+}
+
+async function parseJsonResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      "API returned HTML instead of JSON. Check your backend route or dev proxy.",
+    );
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("API returned invalid JSON");
+  }
+}
+
 async function fetchSubredditPosts(subreddit) {
+  const cleanSubreddit = normalizeSubredditName(subreddit);
+
   const response = await fetch(
-    `https://www.reddit.com/r/${subreddit}.json?raw_json=1`,
+    `/api/reddit/subreddit/${encodeURIComponent(cleanSubreddit)}?limit=12`,
   );
+
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error(`r/${subreddit} was not found.`);
+      throw new Error(data.error || `r/${cleanSubreddit} was not found.`);
     }
-    throw new Error("Unable to fetch subreddit right now.");
+
+    throw new Error(data.error || "Unable to fetch subreddit right now.");
   }
 
-  const data = await response.json();
+  return data.posts || [];
+}
 
-  if (!data?.data?.children) {
-    throw new Error(`r/${subreddit} is unavailable.`);
+async function findSubredditByTopic(query) {
+  const cleanQuery = normalizeSearchInput(query);
+
+  const response = await fetch(
+    `/api/reddit/search-subreddits?q=${encodeURIComponent(cleanQuery)}&limit=5`,
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.error || "Unable to search for that topic now.");
   }
 
-  return data.data.children.map((child) => {
-    const post = child.data;
-    return {
-      id: post.id,
-      title: post.title,
-      author: post.author,
-      ups: post.ups,
-      numComments: post.num_comments,
-      permalink: `https://www.reddit.com${post.permalink}`,
-      thumbnail: post.thumbnail,
-    };
-  });
+  const results = data.results || [];
+
+  if (results.length === 0) {
+    throw new Error(`No subreddit found for "${cleanQuery}".`);
+  }
+
+  const exactMatch = results.find(
+    (item) => item?.display_name?.toLowerCase() === cleanQuery.toLowerCase(),
+  );
+
+  const bestMatch = exactMatch || results[0];
+  const subredditName = bestMatch?.display_name;
+
+  if (!subredditName) {
+    throw new Error(`No subreddit found for "${cleanQuery}".`);
+  }
+
+  return subredditName;
+}
+
+async function resolveLaneToSubreddit(input) {
+  const cleaned = normalizeSearchInput(input);
+
+  if (!cleaned) {
+    throw new Error("Enter a subreddit name or topic.");
+  }
+
+  try {
+    await fetchSubredditPosts(cleaned);
+    return normalizeSubredditName(cleaned);
+  } catch (error) {
+    const matchedSubreddit = await findSubredditByTopic(cleaned);
+    return normalizeSubredditName(matchedSubreddit);
+  }
 }
 
 function AddLaneForm({ onAdd, isSubmitting }) {
@@ -65,17 +130,17 @@ function AddLaneForm({ onAdd, isSubmitting }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const subreddit = normalizeSubredditName(input);
+    const cleaned = input.trim();
 
-    if (!subreddit) {
-      setError("Enter a subreddit name.");
+    if (!cleaned) {
+      setError("Enter a subreddit name or topic.");
       return;
     }
 
     setError("");
 
     try {
-      const result = await onAdd(subreddit);
+      const result = await onAdd(cleaned);
       if (result?.error) {
         setError(result.error);
       } else {
@@ -366,22 +431,22 @@ function HomePage({ auth, onLogout }) {
     }
   };
 
-  const addLane = async (subreddit) => {
-    const normalized = normalizeSubredditName(subreddit);
-
-    if (laneNames.includes(normalized)) {
-      return { error: `r/${normalized} is already added.` };
-    }
-
+  const addLane = async (input) => {
     setIsAdding(true);
 
     try {
-      const posts = await fetchSubredditPosts(normalized);
+      const resolvedSubreddit = await resolveLaneToSubreddit(input);
+
+      if (laneNames.includes(resolvedSubreddit)) {
+        return { error: `r/${resolvedSubreddit} is already added.` };
+      }
+
+      const posts = await fetchSubredditPosts(resolvedSubreddit);
 
       setLanes((current) => [
         ...current,
         {
-          name: normalized,
+          name: resolvedSubreddit,
           posts,
           loading: false,
           error: "",
@@ -391,7 +456,7 @@ function HomePage({ auth, onLogout }) {
       return { ok: true };
     } catch (error) {
       return {
-        error: error.message || `Could not add r/${normalized}.`,
+        error: error.message || "Could not add this lane.",
       };
     } finally {
       setIsAdding(false);
