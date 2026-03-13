@@ -5,6 +5,7 @@ import Profile from "./Profile";
 import CreatePage from "./CreatePage";
 import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
+import NewsPage from "./NewsPage";
 
 const DEFAULT_SUBREDDITS = ["reactjs", "javascript", "webdev"];
 const STORAGE_KEY = "reddit-client-lanes";
@@ -208,6 +209,86 @@ function ProtectedRoute({ isLoggedIn, children }) {
   return children;
 }
 
+function SideNav({ auth, onLogout }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        className={`side-nav-toggle ${isOpen ? "open" : ""}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? "✕" : "☰"}
+      </button>
+
+      <aside className={`side-nav ${isOpen ? "open" : ""}`}>
+        <div className="side-nav-header">
+          <h3>Menu</h3>
+          <p>{auth.isLoggedIn ? `Hi, ${auth.username}` : "Welcome"}</p>
+        </div>
+
+        <div className="side-nav-links">
+          {!auth.isLoggedIn ? (
+            <>
+              <Link
+                to="/login"
+                className="side-nav-link"
+                onClick={() => setIsOpen(false)}
+              >
+                Log In
+              </Link>
+              <Link
+                to="/signup"
+                className="side-nav-link side-nav-link-alt"
+                onClick={() => setIsOpen(false)}
+              >
+                Sign Up
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/profile"
+                className="side-nav-link"
+                onClick={() => setIsOpen(false)}
+              >
+                Profile
+              </Link>
+              <Link
+                to="/news"
+                className="side-nav-link"
+                onClick={() => setIsOpen(false)}
+              >
+                News
+              </Link>
+              <Link
+                to="/create"
+                className="side-nav-link side-nav-link-alt"
+                onClick={() => setIsOpen(false)}
+              >
+                Create Page
+              </Link>
+              <button
+                className="side-nav-link side-nav-logout"
+                onClick={() => {
+                  onLogout();
+                  setIsOpen(false);
+                }}
+              >
+                Log Out
+              </button>
+            </>
+          )}
+        </div>
+      </aside>
+
+      {isOpen && (
+        <div className="side-nav-overlay" onClick={() => setIsOpen(false)} />
+      )}
+    </>
+  );
+}
+
 function HomePage({ auth, onLogout }) {
   const [lanes, setLanes] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -247,10 +328,10 @@ function HomePage({ auth, onLogout }) {
       }
     }
 
-    if (lanes.length > 0) {
+    if (lanes.length > 0 && auth.isLoggedIn) {
       loadInitialLanes();
     }
-  }, [lanes.length]);
+  }, [lanes.length, auth.isLoggedIn]);
 
   const refreshLane = async (subreddit) => {
     setLanes((current) =>
@@ -327,6 +408,8 @@ function HomePage({ auth, onLogout }) {
       <div className="bg-orb bg-orb-2" />
       <div className="bg-grid" />
 
+      <SideNav auth={auth} onLogout={onLogout} />
+
       <header className="app-header">
         <div className="hero-copy">
           <p className="eyebrow">REDDIT COMMAND CENTER</p>
@@ -348,45 +431,24 @@ function HomePage({ auth, onLogout }) {
         </div>
 
         <div className="header-side">
-          <div className="home-nav-group">
-            {!auth.isLoggedIn ? (
-              <>
-                <Link to="/login" className="nav-btn">
-                  Log In
-                </Link>
-                <Link to="/signup" className="nav-btn nav-btn-alt">
-                  Sign Up
-                </Link>
-              </>
-            ) : (
-              <>
-                <button className="nav-btn nav-btn-logout" onClick={onLogout}>
-                  Log Out
-                </button>
-                <Link to="/profile" className="nav-btn">
-                  Profile Page
-                </Link>
-                <Link to="/create" className="nav-btn nav-btn-alt">
-                  Create Page
-                </Link>
-              </>
-            )}
-          </div>
-
-          <AddLaneForm onAdd={addLane} isSubmitting={isAdding} />
+          {auth.isLoggedIn && (
+            <AddLaneForm onAdd={addLane} isSubmitting={isAdding} />
+          )}
         </div>
       </header>
 
-      <main className="lanes-grid">
-        {lanes.map((lane) => (
-          <Lane
-            key={lane.name}
-            lane={lane}
-            onRemove={removeLane}
-            onRefresh={refreshLane}
-          />
-        ))}
-      </main>
+      {auth.isLoggedIn && (
+        <main className="lanes-grid">
+          {lanes.map((lane) => (
+            <Lane
+              key={lane.name}
+              lane={lane}
+              onRemove={removeLane}
+              onRefresh={refreshLane}
+            />
+          ))}
+        </main>
+      )}
     </div>
   );
 }
@@ -417,6 +479,7 @@ export default function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
+      <Route path="/news" element={<NewsPage />} />
       <Route
         path="/create"
         element={

@@ -662,9 +662,12 @@ body {
 }
 
 .home-nav-group {
+  position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
+  flex-wrap: nowrap;
 }
 
 .nav-btn-alt {
@@ -893,6 +896,113 @@ body {
   background: linear-gradient(135deg, #ff5c7a, #ff7f96);
   box-shadow: 0 12px 30px rgba(255, 92, 122, 0.28);
 }
+
+.side-nav-toggle {
+  position: fixed;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  z-index: 1200;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: #ff4500;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s ease;
+}
+
+.side-nav-toggle:hover {
+  transform: translateY(-50%) scale(1.06);
+}
+
+.side-nav-toggle.open {
+  left: 236px;
+}
+
+.side-nav {
+  position: fixed;
+  top: 0;
+  left: -240px;
+  width: 220px;
+  height: 100vh;
+  z-index: 1300;
+  background: rgba(20, 20, 30, 0.96);
+  backdrop-filter: blur(8px);
+  box-shadow: 12px 0 30px rgba(0, 0, 0, 0.35);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s ease;
+}
+
+.side-nav.open {
+  left: 0;
+}
+
+.side-nav-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.side-nav.header h3 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 22px;
+}
+
+.side-nav-header p {
+  margin: 0;
+  color: #b8bfd3;
+  font-size: 14px;
+}
+
+.side-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.side-nav-link {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  text-decoration: none;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.side-nav-link:hover {
+  background: rgba(255, 69, 0, 0.2);
+  transform: translateX(4px);
+}
+
+.side-nav-link-alt {
+  background: rgba(255, 69, 0, 0.18);
+}
+
+.side-nav-logout {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.side-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.35);
+}
+
 @media (max-width: 900px) {
   .app-shell {
     padding: 20px;

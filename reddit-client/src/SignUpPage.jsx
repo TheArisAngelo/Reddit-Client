@@ -72,7 +72,7 @@ export default function SignUpPage({ onLogin }) {
   return (
     <div className="app-shell">
       <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb br-orb-2" />
+      <div className="bg-orb bg-orb-2" />
       <div className="bg-grid" />
 
       <div className="profile-topbar">
@@ -105,6 +105,7 @@ export default function SignUpPage({ onLogin }) {
                 name="username"
                 placeholder="Choose a username"
                 value={formData.username}
+                onChange={handleChange}
               />
             </label>
 
@@ -138,8 +139,7 @@ export default function SignUpPage({ onLogin }) {
           </form>
 
           <p style={{ marginTop: "16px" }}>
-            Already have an account?
-            <Link to="/login">Login</Link>
+            Already have an account? <Link to="/login"> Login </Link>
           </p>
         </section>
       </main>

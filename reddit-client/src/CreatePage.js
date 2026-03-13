@@ -117,9 +117,6 @@ export default function CreatePage() {
           <Link to="/" className="nav-btn">
             Home
           </Link>
-          <Link to="/profile" className="nav-btn">
-            Profile
-          </Link>
         </div>
       </div>
 
