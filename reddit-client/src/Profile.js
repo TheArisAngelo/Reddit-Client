@@ -9,8 +9,14 @@ export default function Profile() {
   const savedUserRaw = localStorage.getItem(USER_STORAGE_KEY);
   const savedUser = savedUserRaw ? JSON.parse(savedUserRaw) : null;
 
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [username, setUsername] = useState(savedUser?.username || "");
+  const [formData, setFormData] = useState({
+    username: savedUser?.username || "",
+    mobileNumber: savedUser?.mobileNumber || "",
+    country: savedUser?.country || "",
+    place: savedUser?.place || "",
+  });
+
+  const [editingField, setEditingField] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -47,49 +53,7 @@ export default function Profile() {
     );
   }
 
-  const handleEditClick = () => {
-    setIsEditingUsername(true);
-    setMessage("");
-    setError("");
-  };
-
-  const handleSaveUsername = () => {
-    const newUsername = username.trim();
-
-    if (!newUsername) {
-      setError("Username cannot be empty.");
-      return;
-    }
-
-    const updatedUser = {
-      ...savedUser,
-      username: newUsername,
-    };
-
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-
-    const savedAuthRaw = localStorage.getItem(AUTH_STORAGE_KEY);
-    const savedAuth = savedAuthRaw ? JSON.parse(savedAuthRaw) : null;
-
-    if (savedAuth) {
-      const updatedAuth = {
-        ...savedAuth,
-        username: newUsername,
-      };
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedAuth));
-    }
-
-    setIsEditingUsername(false);
-    setMessage("Username updated successfully.");
-    setError("");
-  };
-
-  const handleCancelEdit = () => {
-    setUsername(savedUser.username || "");
-    setIsEditingUsername(false);
-    setError("");
-    setMessage("");
-  };
+ 
 
   return (
     <div className="app-shell">
