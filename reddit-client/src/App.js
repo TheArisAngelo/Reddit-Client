@@ -6,6 +6,7 @@ import CreatePage from "./CreatePage";
 import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
 import NewsPage from "./NewsPage";
+import ForgotPassword from "./ForgotPassword";
 
 const DEFAULT_SUBREDDITS = [
   "reactjs",
@@ -545,6 +546,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
       <Route path="/news" element={<NewsPage />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
         path="/create"
         element={

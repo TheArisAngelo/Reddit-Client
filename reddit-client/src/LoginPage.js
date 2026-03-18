@@ -110,6 +110,10 @@ export default function LoginPage({ onLogin }) {
               />
             </label>
 
+            <p style={{ marginTop: "8px", marginBottom: "8px" }}>
+              <Link to="/forgot-password">Forgot Password</Link>
+            </p>
+
             {error ? <div className="lane-error">{error}</div> : null}
 
             <button type="submit" className="create-submit-btn">
