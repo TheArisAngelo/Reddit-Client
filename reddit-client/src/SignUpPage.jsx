@@ -7,11 +7,16 @@ const AUTH_STORAGE_KEY = "reddit-client-auth";
 
 export default function SignUpPage({ onLogin }) {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     confirmPassword: "",
+    mobileNumber: "",
+    country: "",
+    place: "",
   });
+
   const [error, setError] = useState("");
 
   const handleChange = (event) => {
@@ -31,19 +36,37 @@ export default function SignUpPage({ onLogin }) {
     const username = formData.username.trim();
     const password = formData.password.trim();
     const confirmPassword = formData.confirmPassword.trim();
+    const mobileNumber = formData.mobileNumber.trim();
+    const country = formData.country.trim();
+    const place = formData.place.trim();
 
     if (!username) {
-      setError("Please enter a username.");
+      setError("Please enter a username");
+      return;
+    }
+
+    if (!mobileNumber) {
+      setError("Please enter your mobile number");
+      return;
+    }
+
+    if (!country) {
+      setError("Please enter your country");
+      return;
+    }
+
+    if (!place) {
+      setError("Please enter your place");
       return;
     }
 
     if (!password) {
-      setError("Please enter a password.");
+      setError("Please enter a password");
       return;
     }
 
     if (password.length < 4) {
-      setError("Password must be at least 4 characters.");
+      setError("Password must be atleast 4 characters");
       return;
     }
 
@@ -52,7 +75,14 @@ export default function SignUpPage({ onLogin }) {
       return;
     }
 
-    const userData = { username, password };
+    const userData = {
+      username,
+      password,
+      mobileNumber,
+      country,
+      place,
+    };
+
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
 
     const authData = {
@@ -79,7 +109,7 @@ export default function SignUpPage({ onLogin }) {
         <div>
           <p className="eyebrow">Sign Up</p>
           <h1 className="create-page-title">
-            Create your Reddit dashboard account
+            Create your Reddit dashboard Account
           </h1>
         </div>
 
@@ -105,6 +135,39 @@ export default function SignUpPage({ onLogin }) {
                 name="username"
                 placeholder="Choose a username"
                 value={formData.username}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="create-field">
+              <span>Mobile Number</span>
+              <input
+                type="text"
+                name="mobileNumber"
+                placeholder="Enter your mobile number"
+                value={formData.mobileNumber}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="create-field">
+              <span>Country</span>
+              <input
+                type="text"
+                name="country"
+                placeholder="Enter your country"
+                value={formData.country}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="create-field">
+              <span>Place</span>
+              <input
+                type="text"
+                name="place"
+                placeholder="Enter your place"
+                value={formData.place}
                 onChange={handleChange}
               />
             </label>
@@ -139,7 +202,7 @@ export default function SignUpPage({ onLogin }) {
           </form>
 
           <p style={{ marginTop: "16px" }}>
-            Already have an account? <Link to="/login"> Login </Link>
+            Already have an account? <Link to="/login">Login</Link>
           </p>
         </section>
       </main>
