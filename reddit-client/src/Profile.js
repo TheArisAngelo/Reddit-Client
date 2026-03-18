@@ -1,12 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./App.css";
 
 const USER_STORAGE_KEY = "reddit-client-user";
+const AUTH_STORAGE_KEY = "reddit-client-auth";
 
 export default function Profile() {
   const savedUserRaw = localStorage.getItem(USER_STORAGE_KEY);
   const savedUser = savedUserRaw ? JSON.parse(savedUserRaw) : null;
+
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [username, setUsername] = useState(savedUser?.username || "");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   if (!savedUser) {
     return (
@@ -41,6 +47,50 @@ export default function Profile() {
     );
   }
 
+  const handleEditClick = () => {
+    setIsEditingUsername(true);
+    setMessage("");
+    setError("");
+  };
+
+  const handleSaveUsername = () => {
+    const newUsername = username.trim();
+
+    if (!newUsername) {
+      setError("Username cannot be empty.");
+      return;
+    }
+
+    const updatedUser = {
+      ...savedUser,
+      username: newUsername,
+    };
+
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+
+    const savedAuthRaw = localStorage.getItem(AUTH_STORAGE_KEY);
+    const savedAuth = savedAuthRaw ? JSON.parse(savedAuthRaw) : null;
+
+    if (savedAuth) {
+      const updatedAuth = {
+        ...savedAuth,
+        username: newUsername,
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedAuth));
+    }
+
+    setIsEditingUsername(false);
+    setMessage("Username updated successfully.");
+    setError("");
+  };
+
+  const handleCancelEdit = () => {
+    setUsername(savedUser.username || "");
+    setIsEditingUsername(false);
+    setError("");
+    setMessage("");
+  };
+
   return (
     <div className="app-shell">
       <div className="bg-orb bg-orb-1" />
@@ -70,8 +120,71 @@ export default function Profile() {
           <div className="create-form">
             <div className="create-field">
               <span>Username</span>
-              <input type="text" value={savedUser.username || ""} readOnly />
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  readOnly={!isEditingUsername}
+                />
+
+                {!isEditingUsername ? (
+                  <button
+                    type="button"
+                    onClick={handleEditClick}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                    }}
+                    title="Edit Username"
+                  >
+                    ✏️
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleSaveUsername}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: "18px",
+                      }}
+                      title="Save Username"
+                    >
+                      ✅
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: "18px",
+                      }}
+                      title="Cancel"
+                    >
+                      ❌
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
+
+            {error ? <div className="lane-error">{error}</div> : null}
+            {message ? <div className="lane-chip">{message}</div> : null}
 
             <div className="create-field">
               <span>Mobile Number</span>
