@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./App.css";
 
-const USER_STORAGE_KEY = "reddit-client-user";
+const USER_STORAGE_KEY = "budget-tracker-user";
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -110,7 +110,7 @@ export default function LoginPage({ onLogin }) {
               />
             </label>
 
-            <p style={{ marginTop: "8px", marginBottom: "8px", }}>
+            <p style={{ marginTop: "8px", marginBottom: "8px" }}>
               <Link to="/forgot-password">Forgot Password</Link>
             </p>
 
