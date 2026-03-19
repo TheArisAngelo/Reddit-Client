@@ -73,7 +73,7 @@ export default function LoginPage({ onLogin }) {
       <div className="profile-topbar">
         <div>
           <p className="eyebrow">LOGIN</p>
-          <h1 className="create-page-title">Access your Reddit dashboard.</h1>
+          <h1 className="create-page-title">Access your account</h1>
         </div>
 
         <div className="create-top-actions">
