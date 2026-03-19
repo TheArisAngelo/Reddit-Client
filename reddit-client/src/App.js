@@ -2,66 +2,23 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import "./App.css";
 import Profile from "./Profile";
-import CreatePage from "./CreatePage";
 import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
-import NewsPage from "./NewsPage";
 import ForgotPassword from "./ForgotPassword";
 
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
-const BUDGET_STORAGE_KEY = "budget-tracker-data";
+const BUDGET_STORAGE_KEY_PREFIX = "budget-tracker-data";
 
 const DEFAULT_DATA = {
-  transactions: [
-    {
-      id: 1,
-      type: "income",
-      category: "Salary",
-      title: "Monthly Salary",
-      amount: 2500,
-      date: "2025-03-01",
-    },
-    {
-      id: 2,
-      type: "expense",
-      category: "Food",
-      title: "Groceries",
-      amount: 120,
-      date: "2025-03-02",
-    },
-    {
-      id: 3,
-      type: "expense",
-      category: "Shopping",
-      title: "Clothes",
-      amount: 80,
-      date: "2025-03-03",
-    },
-    {
-      id: 4,
-      type: "expense",
-      category: "Entertainment",
-      title: "Movie Night",
-      amount: 40,
-      date: "2025-03-04",
-    },
-    {
-      id: 5,
-      type: "expense",
-      category: "Transportation",
-      title: "Gas",
-      amount: 60,
-      date: "2025-03-05",
-    },
-  ],
-  budgets: [
-    { category: "Food", limit: 250 },
-    { category: "Shopping", limit: 250 },
-    { category: "Entertainment", limit: 250 },
-    { category: "Transportation", limit: 150 },
-  ],
+  currentBalance: 0,
+  transactions: [],
+  budgets: [],
   savingsGoals: [],
 };
+
+function getBudgetStorageKey(username) {
+  return `${BUDGET_STORAGE_KEY_PREFIX}-${username || "guest"}`;
+}
 
 function getStoredAuth() {
   const saved = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -74,19 +31,25 @@ function getStoredAuth() {
   }
 }
 
-function getStoredBudgetData() {
-  const saved = localStorage.getItem(BUDGET_STORAGE_KEY);
+function getStoredBudgetData(username) {
+  const saved = localStorage.getItem(getBudgetStorageKey(username));
 
   try {
     const parsed = saved ? JSON.parse(saved) : null;
-    return parsed || DEFAULT_DATA;
+
+    return {
+      currentBalance: parsed?.currentBalance ?? 0,
+      transactions: parsed?.transactions ?? [],
+      budgets: parsed?.budgets ?? [],
+      savingsGoals: parsed?.savingsGoals ?? [],
+    };
   } catch (error) {
     return DEFAULT_DATA;
   }
 }
 
 function currency(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
+  return `₱${Number(amount || 0).toFixed(2)}`;
 }
 
 function ProtectedRoute({ isLoggedIn, children }) {
@@ -102,75 +65,66 @@ function SideNav({ auth, onLogout }) {
 
   return (
     <>
-      <button
-        className={`side-nav-toggle ${isOpen ? "open" : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? "✕" : "☰"}
-      </button>
+      {auth.isLoggedIn && (
+        <button
+          className={`side-nav-toggle ${isOpen ? "open" : ""}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? "✕" : "☰"}
+        </button>
+      )}
 
-      <aside className={`side-nav ${isOpen ? "open" : ""}`}>
-        <div className="side-nav-header">
-          <h3>Menu</h3>
-          <p>{auth.isLoggedIn ? `Hi, ${auth.username}` : "Welcome"}</p>
-        </div>
+      {auth.isLoggedIn && (
+        <aside className={`side-nav ${isOpen ? "open" : ""}`}>
+          <div className="side-nav-header">
+            <h3>Menu</h3>
+            <p>{auth.isLoggedIn ? `Hi, ${auth.username}` : "Welcome"}</p>
+          </div>
 
-        <div className="side-nav-links">
-          {!auth.isLoggedIn ? (
-            <>
-              <Link
-                to="/login"
-                className="side-nav-link"
-                onClick={() => setIsOpen(false)}
-              >
-                Log In
-              </Link>
-              <Link
-                to="/signup"
-                className="side-nav-link side-nav-link-alt"
-                onClick={() => setIsOpen(false)}
-              >
-                Sign Up
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/profile"
-                className="side-nav-link"
-                onClick={() => setIsOpen(false)}
-              >
-                Profile
-              </Link>
-              <Link
-                to="/news"
-                className="side-nav-link"
-                onClick={() => setIsOpen(false)}
-              >
-                News
-              </Link>
-              <Link
-                to="/create"
-                className="side-nav-link side-nav-link-alt"
-                onClick={() => setIsOpen(false)}
-              >
-                Create Page
-              </Link>
-              <button
-                className="side-nav-link side-nav-logout"
-                onClick={() => {
-                  onLogout();
-                  setIsOpen(false);
-                }}
-              >
-                Log Out
-              </button>
-            </>
-          )}
-        </div>
-      </aside>
+          <div className="side-nav-links">
+            {!auth.isLoggedIn ? (
+              <>
+                <Link
+                  to="/login"
+                  className="side-nav-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="side-nav-link side-nav-link-alt"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/profile"
+                  className="side-nav-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Profile
+                </Link>
 
-      {isOpen && (
+                <button
+                  className="side-nav-link side-nav-logout"
+                  onClick={() => {
+                    onLogout();
+                    setIsOpen(false);
+                  }}
+                >
+                  Log Out
+                </button>
+              </>
+            )}
+          </div>
+        </aside>
+      )}
+
+      {auth.isLoggedIn && isOpen && (
         <div className="side-nav-overlay" onClick={() => setIsOpen(false)} />
       )}
     </>
@@ -208,34 +162,171 @@ function BudgetProgress({ category, spent, limit }) {
   );
 }
 
-function TransactionsTab({ transactions }) {
+function TransactionsTab({ transactions, onAddTransaction }) {
+  const [formData, setFormData] = useState({
+    title: "",
+    amount: "",
+    date: "",
+    category: "",
+    type: "expense",
+  });
+
+  const [error, setError] = useState("");
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const trimmedTitle = formData.title.trim();
+    const trimmedCategory = formData.category.trim();
+    const amountValue = Number(formData.amount);
+
+    if (
+      !trimmedTitle ||
+      !trimmedCategory ||
+      !formData.date ||
+      !formData.amount
+    ) {
+      setError("Please complete all fields.");
+      return;
+    }
+
+    if (Number.isNaN(amountValue) || amountValue <= 0) {
+      setError("Please enter a valid amount greater than 0.");
+      return;
+    }
+
+    const newTransaction = {
+      id: Date.now(),
+      title: trimmedTitle,
+      amount: amountValue,
+      date: formData.date,
+      category: trimmedCategory,
+      type: formData.type,
+    };
+
+    onAddTransaction(newTransaction);
+
+    setFormData({
+      title: "",
+      amount: "",
+      date: "",
+      category: "",
+      type: "expense",
+    });
+    setError("");
+  };
+
   return (
     <section className="panel-card">
       <h2>Recent Transactions</h2>
+
+      <form className="transaction-form" onSubmit={handleSubmit}>
+        <div className="transaction-form-grid">
+          <div className="transaction-field">
+            <label htmlFor="title">Transaction Title</label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              placeholder="e.g. Grocery Shopping"
+              value={formData.title}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="transaction-field">
+            <label htmlFor="amount">Amount Paid</label>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="e.g. 120"
+              value={formData.amount}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="transaction-field">
+            <label htmlFor="date">Date</label>
+            <input
+              id="date"
+              name="date"
+              type="date"
+              value={formData.date}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="transaction-field">
+            <label htmlFor="category">Category</label>
+            <input
+              id="category"
+              name="category"
+              type="text"
+              placeholder="e.g. Food, Clothes, Transport"
+              value={formData.category}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="transaction-field">
+            <label htmlFor="type">Type</label>
+            <select
+              id="type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+            >
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+        </div>
+
+        {error && <p className="transaction-form-error">{error}</p>}
+
+        <button type="submit" className="transaction-submit-btn">
+          Add Transaction
+        </button>
+      </form>
+
       {transactions.length === 0 ? (
         <p className="empty-text">No transactions yet.</p>
       ) : (
         <div className="transactions-list">
-          {transactions.map((transaction) => (
-            <div key={transaction.id} className="transaction-row">
-              <div>
-                <h4>{transaction.title}</h4>
-                <p>
-                  {transaction.category} • {transaction.date}
-                </p>
+          {[...transactions]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map((transaction) => (
+              <div key={transaction.id} className="transaction-row">
+                <div>
+                  <h4>{transaction.title}</h4>
+                  <p>
+                    {transaction.category} • {transaction.date} •{" "}
+                    {transaction.type}
+                  </p>
+                </div>
+                <strong
+                  className={
+                    transaction.type === "income"
+                      ? "amount-income"
+                      : "amount-expense"
+                  }
+                >
+                  {transaction.type === "income" ? "+" : "-"}
+                  {currency(transaction.amount)}
+                </strong>
               </div>
-              <strong
-                className={
-                  transaction.type === "income"
-                    ? "amount-income"
-                    : "amount-expense"
-                }
-              >
-                {transaction.type === "income" ? "+" : "-"}
-                {currency(transaction.amount)}
-              </strong>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </section>
@@ -246,16 +337,20 @@ function BudgetsTab({ budgets, categoryTotals }) {
   return (
     <section className="panel-card">
       <h2>Budget Overview</h2>
-      <div className="budget-progress-list">
-        {budgets.map((budget) => (
-          <BudgetProgress
-            key={budget.category}
-            category={budget.category}
-            spent={categoryTotals[budget.category] || 0}
-            limit={budget.limit}
-          />
-        ))}
-      </div>
+      {budgets.length === 0 ? (
+        <p className="empty-text">No budgets yet.</p>
+      ) : (
+        <div className="budget-progress-list">
+          {budgets.map((budget) => (
+            <BudgetProgress
+              key={budget.category}
+              category={budget.category}
+              spent={categoryTotals[budget.category] || 0}
+              limit={budget.limit}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -290,16 +385,56 @@ function SavingsTab({ savingsGoals }) {
 function HomePage({ auth, onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
+  const [balanceInput, setBalanceInput] = useState("");
 
   useEffect(() => {
-    setBudgetData(getStoredBudgetData());
-  }, []);
+    if (auth?.username) {
+      setBudgetData(getStoredBudgetData(auth.username));
+    }
+  }, [auth?.username]);
 
   useEffect(() => {
-    localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetData));
-  }, [budgetData]);
+    if (auth?.username) {
+      localStorage.setItem(
+        getBudgetStorageKey(auth.username),
+        JSON.stringify(budgetData),
+      );
+    }
+  }, [budgetData, auth?.username]);
 
-  const { transactions, budgets, savingsGoals } = budgetData;
+  useEffect(() => {
+    setBalanceInput(String(budgetData.currentBalance ?? 0));
+  }, [budgetData.currentBalance]);
+
+  const handleAddTransaction = (newTransaction) => {
+    setBudgetData((prev) => {
+      const updatedBalance =
+        newTransaction.type === "income"
+          ? prev.currentBalance + newTransaction.amount
+          : prev.currentBalance - newTransaction.amount;
+
+      return {
+        ...prev,
+        currentBalance: updatedBalance,
+        transactions: [newTransaction, ...prev.transactions],
+      };
+    });
+  };
+
+  const handleSetCurrentBalance = () => {
+    const parsedBalance = Number(balanceInput);
+
+    if (Number.isNaN(parsedBalance) || parsedBalance < 0) {
+      return;
+    }
+
+    setBudgetData((prev) => ({
+      ...prev,
+      currentBalance: parsedBalance,
+    }));
+  };
+
+  const { currentBalance, transactions, budgets, savingsGoals } = budgetData;
 
   const totalIncome = useMemo(() => {
     return transactions
@@ -313,7 +448,7 @@ function HomePage({ auth, onLogout }) {
       .reduce((sum, item) => sum + item.amount, 0);
   }, [transactions]);
 
-  const balance = totalIncome - totalExpenses;
+  const balance = currentBalance;
 
   const incomeCount = transactions.filter(
     (item) => item.type === "income",
@@ -375,7 +510,7 @@ function HomePage({ auth, onLogout }) {
                 <h3>Set Budgets</h3>
                 <p>
                   Create spending limits for food, shopping, transport, and
-                  more.{" "}
+                  more.
                 </p>
               </div>
 
@@ -435,6 +570,41 @@ function HomePage({ auth, onLogout }) {
       </header>
 
       <main className="budget-main">
+        <section className="panel-card current-balance-editor">
+          <div className="current-balance-editor-head">
+            <div>
+              <h2>Set Current Balance</h2>
+              <p className="current-balance-editor-text">
+                Enter your balance for today. New transactions will
+                automatically update it.
+              </p>
+            </div>
+          </div>
+
+          <div className="current-balance-form">
+            <div className="transaction-field">
+              <label htmlFor="currentBalance">Current Balance</label>
+              <input
+                id="currentBalance"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Enter your current balance"
+                value={balanceInput}
+                onChange={(e) => setBalanceInput(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="transaction-submit-btn"
+              onClick={handleSetCurrentBalance}
+            >
+              Save Balance
+            </button>
+          </div>
+        </section>
+
         <section className="summary-grid">
           <SummaryCard
             title="Total Income"
@@ -451,7 +621,7 @@ function HomePage({ auth, onLogout }) {
           <SummaryCard
             title="Current Balance"
             amount={currency(balance)}
-            subtitle="Net balance from all transactions"
+            subtitle="Your saved balance updated by transactions"
             className="balance-card"
           />
           <SummaryCard
@@ -470,7 +640,10 @@ function HomePage({ auth, onLogout }) {
         )}
 
         {activeTab === "transactions" && (
-          <TransactionsTab transactions={transactions} />
+          <TransactionsTab
+            transactions={transactions}
+            onAddTransaction={handleAddTransaction}
+          />
         )}
 
         {activeTab === "budgets" && (
@@ -506,19 +679,17 @@ export default function App() {
         path="/"
         element={<HomePage auth={auth} onLogout={handleLogout} />}
       />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-      <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
-      <Route path="/news" element={<NewsPage />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
-        path="/create"
+        path="/profile"
         element={
           <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
-            <CreatePage />
+            <Profile />
           </ProtectedRoute>
         }
       />
+      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+      <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
     </Routes>
   );
 }
