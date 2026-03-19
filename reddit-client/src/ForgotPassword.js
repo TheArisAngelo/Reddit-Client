@@ -91,7 +91,7 @@ export default function ForgotPassword() {
         <div className="profile-topbar">
           <div>
             <p className="eyebrow">Reset Password</p>
-            <h1 className="create-page-title">Create a new password.</h1>
+            <h1 className="create-page-title">Create a new password</h1>
           </div>
 
           <div className="create-top-actions">

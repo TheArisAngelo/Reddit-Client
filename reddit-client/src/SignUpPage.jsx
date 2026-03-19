@@ -109,7 +109,7 @@ export default function SignUpPage({ onLogin }) {
         <div>
           <p className="eyebrow">Sign Up</p>
           <h1 className="create-page-title">
-            Create your Reddit dashboard Account
+            Create your account
           </h1>
         </div>
 
