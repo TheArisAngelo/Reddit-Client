@@ -5,12 +5,14 @@ import Profile from "./Profile";
 import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
 import ForgotPassword from "./ForgotPassword";
+import BudgetsTab from "./BudgetsTab";
 
+const USER_STORAGE_KEY = "budget-tracker-user";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 const BUDGET_STORAGE_KEY_PREFIX = "budget-tracker-data";
 
 const DEFAULT_DATA = {
-  currentBalance: 0,
+  currentBalance: [],
   transactions: [],
   budgets: [],
   savingsGoals: [],
@@ -38,10 +40,14 @@ function getStoredBudgetData(username) {
     const parsed = saved ? JSON.parse(saved) : null;
 
     return {
-      currentBalance: parsed?.currentBalance ?? 0,
-      transactions: parsed?.transactions ?? [],
-      budgets: parsed?.budgets ?? [],
-      savingsGoals: parsed?.savingsGoals ?? [],
+      currentBalance: parseInt(parsed?.currentBalance ?? 0, 10) || 0,
+      transactions: Array.isArray(parsed?.transactions)
+        ? parsed.transactions
+        : [],
+      budgets: Array.isArray(parsed?.budgets) ? parsed.budgets : [],
+      savingsGoals: Array.isArray(parsed?.savingsGoals)
+        ? parsed.savingsGoals
+        : [],
     };
   } catch (error) {
     return DEFAULT_DATA;
@@ -49,7 +55,7 @@ function getStoredBudgetData(username) {
 }
 
 function currency(amount) {
-  return `₱${Number(amount || 0).toFixed(2)}`;
+  return `₱${Math.round(Number(amount || 0))}`;
 }
 
 function ProtectedRoute({ isLoggedIn, children }) {
@@ -141,27 +147,6 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
   );
 }
 
-function BudgetProgress({ category, spent, limit }) {
-  const percentage = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
-
-  return (
-    <div className="budget-progress-item">
-      <div className="budget-progress-head">
-        <span>{category}</span>
-        <span>
-          {currency(spent)} spent of {currency(limit)}
-        </span>
-      </div>
-      <div className="budget-progress-bar">
-        <div
-          className="budget-progress-fill"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function TransactionsTab({ transactions, onAddTransaction }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -186,7 +171,7 @@ function TransactionsTab({ transactions, onAddTransaction }) {
 
     const trimmedTitle = formData.title.trim();
     const trimmedCategory = formData.category.trim();
-    const amountValue = Number(formData.amount);
+    const amountValue = parseInt(formData.amount, 10);
 
     if (
       !trimmedTitle ||
@@ -198,7 +183,7 @@ function TransactionsTab({ transactions, onAddTransaction }) {
       return;
     }
 
-    if (Number.isNaN(amountValue) || amountValue <= 0) {
+    if (!Number.isInteger(amountValue) || amountValue <= 0) {
       setError("Please enter a valid amount greater than 0.");
       return;
     }
@@ -248,8 +233,8 @@ function TransactionsTab({ transactions, onAddTransaction }) {
               id="amount"
               name="amount"
               type="number"
-              min="0.01"
-              step="0.01"
+              min="1"
+              step="1"
               placeholder="e.g. 120"
               value={formData.amount}
               onChange={handleChange}
@@ -333,28 +318,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
   );
 }
 
-function BudgetsTab({ budgets, categoryTotals }) {
-  return (
-    <section className="panel-card">
-      <h2>Budget Overview</h2>
-      {budgets.length === 0 ? (
-        <p className="empty-text">No budgets yet.</p>
-      ) : (
-        <div className="budget-progress-list">
-          {budgets.map((budget) => (
-            <BudgetProgress
-              key={budget.category}
-              category={budget.category}
-              spent={categoryTotals[budget.category] || 0}
-              limit={budget.limit}
-            />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 function SavingsTab({ savingsGoals }) {
   return (
     <section className="panel-card savings-panel">
@@ -390,6 +353,8 @@ function HomePage({ auth, onLogout }) {
   useEffect(() => {
     if (auth?.username) {
       setBudgetData(getStoredBudgetData(auth.username));
+    } else {
+      setBudgetData(DEFAULT_DATA);
     }
   }, [auth?.username]);
 
@@ -421,10 +386,21 @@ function HomePage({ auth, onLogout }) {
     });
   };
 
-  const handleSetCurrentBalance = () => {
-    const parsedBalance = Number(balanceInput);
+  const handleAddBudget = (newBudget) => {
+    setBudgetData((prev) => ({
+      ...prev,
+      budgets: [newBudget, ...prev.budgets],
+    }));
+  };
 
-    if (Number.isNaN(parsedBalance) || parsedBalance < 0) {
+  const handleSetCurrentBalance = () => {
+    const parsedBalance = parseInt(balanceInput, 10);
+
+    if (balanceInput.trim() === "") {
+      return;
+    }
+
+    if (!Number.isInteger(parsedBalance) || parsedBalance < 0) {
       return;
     }
 
@@ -570,40 +546,42 @@ function HomePage({ auth, onLogout }) {
       </header>
 
       <main className="budget-main">
-        <section className="panel-card current-balance-editor">
-          <div className="current-balance-editor-head">
-            <div>
-              <h2>Set Current Balance</h2>
-              <p className="current-balance-editor-text">
-                Enter your balance for today. New transactions will
-                automatically update it.
-              </p>
-            </div>
-          </div>
-
-          <div className="current-balance-form">
-            <div className="transaction-field">
-              <label htmlFor="currentBalance">Current Balance</label>
-              <input
-                id="currentBalance"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Enter your current balance"
-                value={balanceInput}
-                onChange={(e) => setBalanceInput(e.target.value)}
-              />
+        {activeTab !== "budgets" && (
+          <section className="panel-card current-balance-editor">
+            <div className="current-balance-editor-head">
+              <div>
+                <h2>Set Current Balance</h2>
+                <p className="current-balance-editor-text">
+                  Enter your balance for today. New transactions will
+                  automatically update it.
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              className="transaction-submit-btn"
-              onClick={handleSetCurrentBalance}
-            >
-              Save Balance
-            </button>
-          </div>
-        </section>
+            <div className="current-balance-form">
+              <div className="transaction-field">
+                <label htmlFor="currentBalance">Current Balance</label>
+                <input
+                  id="currentBalance"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Enter your current balance"
+                  value={balanceInput}
+                  onChange={(e) => setBalanceInput(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="transaction-submit-btn"
+                onClick={handleSetCurrentBalance}
+              >
+                Save Balance
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="summary-grid">
           <SummaryCard
@@ -634,7 +612,11 @@ function HomePage({ auth, onLogout }) {
 
         {activeTab === "dashboard" && (
           <section className="dashboard-grid">
-            <BudgetsTab budgets={budgets} categoryTotals={categoryTotals} />
+            <BudgetsTab
+              budgets={budgets}
+              categoryTotals={categoryTotals}
+              onAddBudget={handleAddBudget}
+            />
             <SavingsTab savingsGoals={savingsGoals} />
           </section>
         )}
@@ -647,7 +629,11 @@ function HomePage({ auth, onLogout }) {
         )}
 
         {activeTab === "budgets" && (
-          <BudgetsTab budgets={budgets} categoryTotals={categoryTotals} />
+          <BudgetsTab
+            budgets={budgets}
+            categoryTotals={categoryTotals}
+            onAddBudget={handleAddBudget}
+          />
         )}
 
         {activeTab === "savings" && <SavingsTab savingsGoals={savingsGoals} />}

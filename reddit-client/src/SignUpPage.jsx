@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./App.css";
 
-const USER_STORAGE_KEY = "reddit-client-user";
-const AUTH_STORAGE_KEY = "reddit-client-auth";
+const USER_STORAGE_KEY = "budget-tracker-user";
+const AUTH_STORAGE_KEY = "budget-tracker-auth";
 
 export default function SignUpPage({ onLogin }) {
   const navigate = useNavigate();
@@ -108,9 +108,7 @@ export default function SignUpPage({ onLogin }) {
       <div className="profile-topbar">
         <div>
           <p className="eyebrow">Sign Up</p>
-          <h1 className="create-page-title">
-            Create your account
-          </h1>
+          <h1 className="create-page-title">Create your account</h1>
         </div>
 
         <div className="create-top-actions">
