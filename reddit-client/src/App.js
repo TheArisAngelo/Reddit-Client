@@ -652,7 +652,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    setAuth({ isLoggedIn: false, username: "" });
+    setAuth({ isLoggedIn: false, username: "", token: "" });
   };
 
   useEffect(() => {

@@ -20,7 +20,7 @@ const budgetSchema = new mongoose.Schema(
   { _id: true },
 );
 
-const savingsGoalSchema = new mongoosee.Schema(
+const savingsGoalSchema = new mongoose.Schema(
   {
     title: String,
     target: Number,
@@ -54,7 +54,7 @@ const budgetDataSchema = new mongoose.Schema(
       default: [],
     },
   },
-  { timeStamps: true },
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("BudgetData", budgetDataSchema);
