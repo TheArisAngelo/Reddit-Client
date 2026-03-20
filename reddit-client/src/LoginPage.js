@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./App.css";
 
-const USER_STORAGE_KEY = "budget-tracker-user";
+const AUTH_STORAGE_KEY = "budget-tracker-auth";
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function LoginPage({ onLogin }) {
     password: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -23,7 +25,7 @@ export default function LoginPage({ onLogin }) {
     if (error) setError("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const username = formData.username.trim();
@@ -39,29 +41,35 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
-    const savedUserRaw = localStorage.getItem(USER_STORAGE_KEY);
-    const savedUser = savedUserRaw ? JSON.parse(savedUserRaw) : null;
+    try {
+      setLoading(true);
 
-    if (!savedUser) {
-      setError("No account found. Please sign up first.");
-      return;
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          username,
+          password,
+        },
+      );
+
+      const authData = {
+        isLoggedIn: true,
+        username: response.data.user.username,
+        token: response.data.token,
+      };
+
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+
+      if (onLogin) {
+        onLogin(authData);
+      }
+
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed.");
+    } finally {
+      setLoading(false);
     }
-
-    if (savedUser.username !== username || savedUser.password !== password) {
-      setError("Invalid username or password.");
-      return;
-    }
-
-    const authData = {
-      isLoggedIn: true,
-      username: savedUser.username,
-    };
-
-    if (onLogin) {
-      onLogin(authData);
-    }
-
-    navigate("/");
   };
 
   return (
@@ -116,8 +124,12 @@ export default function LoginPage({ onLogin }) {
 
             {error ? <div className="lane-error">{error}</div> : null}
 
-            <button type="submit" className="create-submit-btn">
-              Log In
+            <button
+              type="submit"
+              className="create-submit-btn"
+              disabled={loading}
+            >
+              {loading ? "Logging In..." : "Log In"}
             </button>
           </form>
 

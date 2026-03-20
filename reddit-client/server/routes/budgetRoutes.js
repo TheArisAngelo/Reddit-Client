@@ -64,7 +64,7 @@ router.post("/budgets", authMiddleware, async (req, res) => {
   try {
     const newBudget = req.body;
 
-    const budgetData = await BudgetDatta.findOne({ userId: req.user.userId });
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
 
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });

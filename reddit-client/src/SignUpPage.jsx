@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./App.css";
 
-const USER_STORAGE_KEY = "budget-tracker-user";
-const AUTH_STORAGE_KEY = "budget-tracker-auth";
-
-export default function SignUpPage({ onLogin }) {
+export default function SignUpPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -18,6 +16,7 @@ export default function SignUpPage({ onLogin }) {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -30,7 +29,7 @@ export default function SignUpPage({ onLogin }) {
     if (error) setError("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const username = formData.username.trim();
@@ -66,7 +65,7 @@ export default function SignUpPage({ onLogin }) {
     }
 
     if (password.length < 4) {
-      setError("Password must be atleast 4 characters");
+      setError("Password must be at least 4 characters");
       return;
     }
 
@@ -75,28 +74,23 @@ export default function SignUpPage({ onLogin }) {
       return;
     }
 
-    const userData = {
-      username,
-      password,
-      mobileNumber,
-      country,
-      place,
-    };
+    try {
+      setLoading(true);
 
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+      await axios.post("http://localhost:5000/api/auth/signup", {
+        username,
+        password,
+        mobileNumber,
+        country,
+        place,
+      });
 
-    const authData = {
-      isLoggedIn: true,
-      username,
-    };
-
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
-
-    if (onLogin) {
-      onLogin(authData);
+      navigate("/login");
+    } catch (err) {
+      setError(err.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
     }
-
-    navigate("/");
   };
 
   return (
@@ -194,8 +188,12 @@ export default function SignUpPage({ onLogin }) {
 
             {error ? <div className="lane-error">{error}</div> : null}
 
-            <button type="submit" className="create-submit-btn">
-              Sign Up
+            <button
+              type="submit"
+              className="create-submit-btn"
+              disabled={loading}
+            >
+              {loading ? "Signing Up..." : "Sign Up"}
             </button>
           </form>
 
