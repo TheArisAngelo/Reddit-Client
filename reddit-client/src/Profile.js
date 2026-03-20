@@ -1,14 +1,62 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import "./App.css";
 
-const USER_STORAGE_KEY = "budget-tracker-user";
+const AUTH_STORAGE_KEY = "budget-tracker-auth";
 
 export default function Profile() {
-  const savedUserRaw = localStorage.getItem(USER_STORAGE_KEY);
-  const savedUser = savedUserRaw ? JSON.parse(savedUserRaw) : null;
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  if (!savedUser) {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const savedAuthRaw = localStorage.getItem(AUTH_STORAGE_KEY);
+        const savedAuth = savedAuthRaw ? JSON.parse(savedAuthRaw) : null;
+
+        if (!savedAuth?.token) {
+          setError("No token found. Please log in.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get("http://localhost:5000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${savedAuth.token}`,
+          },
+        });
+
+        setUser(response.data.user);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load user profile.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="app-shell">
+        <div className="bg-orb bg-orb-1" />
+        <div className="bg-orb bg-orb-2" />
+        <div className="bg-grid" />
+
+        <main className="login-layout">
+          <section className="create-card login-card">
+            <div className="lane-chip">Profile</div>
+            <div>Loading profile...</div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <div className="app-shell">
         <div className="bg-orb bg-orb-1" />
@@ -25,8 +73,8 @@ export default function Profile() {
             <Link to="/" className="nav-btn">
               Home
             </Link>
-            <Link to="/signup" className="nav-btn">
-              Sign Up
+            <Link to="/login" className="nav-btn">
+              Log In
             </Link>
           </div>
         </div>
@@ -34,7 +82,7 @@ export default function Profile() {
         <main className="login-layout">
           <section className="create-card login-card">
             <div className="lane-chip">Profile</div>
-            <div className="lane-error">No user information found.</div>
+            <div className="lane-error">{error}</div>
           </section>
         </main>
       </div>
@@ -67,26 +115,22 @@ export default function Profile() {
           <div className="create-form">
             <div className="create-field">
               <span>Username</span>
-              <input type="text" value={savedUser.username || ""} readOnly />
+              <input type="text" value={user?.username || ""} readOnly />
             </div>
 
             <div className="create-field">
               <span>Mobile Number</span>
-              <input
-                type="text"
-                value={savedUser.mobileNumber || ""}
-                readOnly
-              />
+              <input type="text" value={user?.mobileNumber || ""} readOnly />
             </div>
 
             <div className="create-field">
               <span>Country</span>
-              <input type="text" value={savedUser.country || ""} readOnly />
+              <input type="text" value={user?.country || ""} readOnly />
             </div>
 
             <div className="create-field">
               <span>Place</span>
-              <input type="text" value={savedUser.place || ""} readOnly />
+              <input type="text" value={user?.place || ""} readOnly />
             </div>
           </div>
         </section>
