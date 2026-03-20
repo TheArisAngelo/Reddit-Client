@@ -58,7 +58,15 @@ export default function LoginPage({ onLogin }) {
         token: response.data.token,
       };
 
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+      const userData = {
+        username: response.data.user.username,
+        mobileNumber: response.data.user.mobileNumber,
+        country: response.data.user.country,
+        place: response.data.user.place,
+      };
+
+      localStorage.setItem("budget-tracker-auth", JSON.stringify(authData));
+      localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
 
       if (onLogin) {
         onLogin(authData);
