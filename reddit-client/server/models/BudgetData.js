@@ -13,9 +13,9 @@ const transactionSchema = new mongoose.Schema(
 
 const budgetSchema = new mongoose.Schema(
   {
-    title: String,
-    amount: Number,
     category: String,
+    limit: Number,
+    targetDate: String,
   },
   { _id: true },
 );

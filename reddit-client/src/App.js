@@ -7,50 +7,23 @@ import SignUpPage from "./SignUpPage";
 import ForgotPassword from "./ForgotPassword";
 import BudgetsTab from "./BudgetsTab";
 
-const USER_STORAGE_KEY = "budget-tracker-user";
+const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
-const BUDGET_STORAGE_KEY_PREFIX = "budget-tracker-data";
 
 const DEFAULT_DATA = {
-  currentBalance: [],
+  currentBalance: 0,
   transactions: [],
   budgets: [],
   savingsGoals: [],
 };
 
-function getBudgetStorageKey(username) {
-  return `${BUDGET_STORAGE_KEY_PREFIX}-${username || "guest"}`;
-}
-
 function getStoredAuth() {
   const saved = localStorage.getItem(AUTH_STORAGE_KEY);
-
   try {
     const parsed = saved ? JSON.parse(saved) : null;
     return parsed?.isLoggedIn ? parsed : { isLoggedIn: false, username: "" };
   } catch (error) {
     return { isLoggedIn: false, username: "" };
-  }
-}
-
-function getStoredBudgetData(username) {
-  const saved = localStorage.getItem(getBudgetStorageKey(username));
-
-  try {
-    const parsed = saved ? JSON.parse(saved) : null;
-
-    return {
-      currentBalance: parseInt(parsed?.currentBalance ?? 0, 10) || 0,
-      transactions: Array.isArray(parsed?.transactions)
-        ? parsed.transactions
-        : [],
-      budgets: Array.isArray(parsed?.budgets) ? parsed.budgets : [],
-      savingsGoals: Array.isArray(parsed?.savingsGoals)
-        ? parsed.savingsGoals
-        : [],
-    };
-  } catch (error) {
-    return DEFAULT_DATA;
   }
 }
 
@@ -62,7 +35,6 @@ function ProtectedRoute({ isLoggedIn, children }) {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
-
   return children;
 }
 
@@ -114,7 +86,6 @@ function SideNav({ auth, onLogout }) {
                 >
                   Profile
                 </Link>
-
                 <button
                   className="side-nav-link side-nav-logout"
                   onClick={() => {
@@ -155,15 +126,11 @@ function TransactionsTab({ transactions, onAddTransaction }) {
     category: "",
     type: "expense",
   });
-
   const [error, setError] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (event) => {
@@ -198,7 +165,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
     };
 
     onAddTransaction(newTransaction);
-
     setFormData({
       title: "",
       amount: "",
@@ -226,7 +192,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
               onChange={handleChange}
             />
           </div>
-
           <div className="transaction-field">
             <label htmlFor="amount">Amount Paid</label>
             <input
@@ -240,7 +205,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
               onChange={handleChange}
             />
           </div>
-
           <div className="transaction-field">
             <label htmlFor="date">Date</label>
             <input
@@ -251,7 +215,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
               onChange={handleChange}
             />
           </div>
-
           <div className="transaction-field">
             <label htmlFor="category">Category</label>
             <input
@@ -263,7 +226,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
               onChange={handleChange}
             />
           </div>
-
           <div className="transaction-field">
             <label htmlFor="type">Type</label>
             <select
@@ -279,7 +241,6 @@ function TransactionsTab({ transactions, onAddTransaction }) {
         </div>
 
         {error && <p className="transaction-form-error">{error}</p>}
-
         <button type="submit" className="transaction-submit-btn">
           Add Transaction
         </button>
@@ -322,7 +283,6 @@ function SavingsTab({ savingsGoals }) {
   return (
     <section className="panel-card savings-panel">
       <h2>Savings Goals</h2>
-
       {savingsGoals.length === 0 ? (
         <div className="empty-savings">
           <div className="savings-icon">◎</div>
@@ -350,64 +310,90 @@ function HomePage({ auth, onLogout }) {
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
   const [balanceInput, setBalanceInput] = useState("");
 
+  // ✅ Load data from MongoDB with safety check
   useEffect(() => {
-    if (auth?.username) {
-      setBudgetData(getStoredBudgetData(auth.username));
+    if (auth?.token) {
+      fetch(API, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.transactions) {
+            setBudgetData(data);
+          } else {
+            setBudgetData(DEFAULT_DATA);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load budget data", err);
+          setBudgetData(DEFAULT_DATA);
+        });
     } else {
       setBudgetData(DEFAULT_DATA);
     }
-  }, [auth?.username]);
-
-  useEffect(() => {
-    if (auth?.username) {
-      localStorage.setItem(
-        getBudgetStorageKey(auth.username),
-        JSON.stringify(budgetData),
-      );
-    }
-  }, [budgetData, auth?.username]);
+  }, [auth?.token]);
 
   useEffect(() => {
     setBalanceInput(String(budgetData.currentBalance ?? 0));
   }, [budgetData.currentBalance]);
 
-  const handleAddTransaction = (newTransaction) => {
-    setBudgetData((prev) => {
-      const updatedBalance =
-        newTransaction.type === "income"
-          ? prev.currentBalance + newTransaction.amount
-          : prev.currentBalance - newTransaction.amount;
-
-      return {
-        ...prev,
-        currentBalance: updatedBalance,
-        transactions: [newTransaction, ...prev.transactions],
-      };
-    });
+  const handleAddTransaction = async (newTransaction) => {
+    try {
+      const res = await fetch(`${API}/transactions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(newTransaction),
+      });
+      const updated = await res.json();
+      setBudgetData(updated);
+    } catch (err) {
+      console.error("Failed to add transaction", err);
+    }
   };
 
-  const handleAddBudget = (newBudget) => {
-    setBudgetData((prev) => ({
-      ...prev,
-      budgets: [newBudget, ...prev.budgets],
-    }));
+  const handleAddBudget = async (newBudget) => {
+    try {
+      const res = await fetch(`${API}/budgets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(newBudget),
+      });
+      const updated = await res.json();
+      setBudgetData(updated);
+    } catch (err) {
+      console.error("Failed to add budget", err);
+    }
   };
 
-  const handleSetCurrentBalance = () => {
+  const handleSetCurrentBalance = async () => {
     const parsedBalance = parseInt(balanceInput, 10);
-
-    if (balanceInput.trim() === "") {
+    if (
+      balanceInput.trim() === "" ||
+      !Number.isInteger(parsedBalance) ||
+      parsedBalance < 0
+    )
       return;
-    }
 
-    if (!Number.isInteger(parsedBalance) || parsedBalance < 0) {
-      return;
+    try {
+      const res = await fetch(`${API}/balance`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ currentBalance: parsedBalance }),
+      });
+      const updated = await res.json();
+      setBudgetData(updated);
+    } catch (err) {
+      console.error("Failed to update balance", err);
     }
-
-    setBudgetData((prev) => ({
-      ...prev,
-      currentBalance: parsedBalance,
-    }));
   };
 
   const { currentBalance, transactions, budgets, savingsGoals } = budgetData;
@@ -425,18 +411,14 @@ function HomePage({ auth, onLogout }) {
   }, [transactions]);
 
   const balance = currentBalance;
-
   const incomeCount = transactions.filter(
     (item) => item.type === "income",
   ).length;
-
   const expenseCount = transactions.filter(
     (item) => item.type === "expense",
   ).length;
-
   const spendingRate =
     totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
-
   const spendingStatus =
     spendingRate < 50 ? "Good" : spendingRate < 80 ? "Warning" : "Critical";
 
@@ -453,7 +435,6 @@ function HomePage({ auth, onLogout }) {
     return (
       <div className="app-shell budget-app">
         <SideNav auth={auth} onLogout={onLogout} />
-
         <main className="budget-main">
           <section className="guest-home">
             <div className="guest-hero-card">
@@ -463,7 +444,6 @@ function HomePage({ auth, onLogout }) {
                 Manage your income, monitor expenses, plan category budgets, and
                 stay focused on savings goals.
               </p>
-
               <div className="guest-actions">
                 <Link to="/login" className="nav-btn">
                   Log In
@@ -473,7 +453,6 @@ function HomePage({ auth, onLogout }) {
                 </Link>
               </div>
             </div>
-
             <section className="guest-feature-grid">
               <div className="guest-feature-card">
                 <h3>Track Expenses</h3>
@@ -481,7 +460,6 @@ function HomePage({ auth, onLogout }) {
                   See where your money goes and stay aware of daily spending.
                 </p>
               </div>
-
               <div className="guest-feature-card">
                 <h3>Set Budgets</h3>
                 <p>
@@ -489,7 +467,6 @@ function HomePage({ auth, onLogout }) {
                   more.
                 </p>
               </div>
-
               <div className="guest-feature-card">
                 <h3>Build Savings</h3>
                 <p>
@@ -510,7 +487,6 @@ function HomePage({ auth, onLogout }) {
 
       <header className="budget-header">
         <h1>Personal Budget Tracker</h1>
-
         <div className="tab-nav">
           <button
             className={activeTab === "dashboard" ? "active" : ""}
@@ -537,7 +513,6 @@ function HomePage({ auth, onLogout }) {
             Savings
           </button>
         </div>
-
         <div className="auth-status">
           <span>
             Logged in as <strong>{auth.username}</strong>
@@ -557,7 +532,6 @@ function HomePage({ auth, onLogout }) {
                 </p>
               </div>
             </div>
-
             <div className="current-balance-form">
               <div className="transaction-field">
                 <label htmlFor="currentBalance">Current Balance</label>
@@ -571,7 +545,6 @@ function HomePage({ auth, onLogout }) {
                   onChange={(e) => setBalanceInput(e.target.value)}
                 />
               </div>
-
               <button
                 type="button"
                 className="transaction-submit-btn"

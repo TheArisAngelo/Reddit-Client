@@ -62,12 +62,16 @@ export default function BudgetsTab({ budgets, categoryTotals, onAddBudget }) {
       return;
     }
 
-    onAddBudget({
+    const budgetToAdd = {
       id: Date.now(),
       category: trimmedCategory,
       limit: limitValue,
       targetDate: formData.targetDate,
-    });
+    };
+
+    console.log("Budget being sent:", budgetToAdd); // debug
+
+    onAddBudget(budgetToAdd);
 
     setFormData({
       category: "",
@@ -134,7 +138,7 @@ export default function BudgetsTab({ budgets, categoryTotals, onAddBudget }) {
         <div className="budget-progress-list">
           {budgets.map((budget) => (
             <BudgetProgress
-              key={budget.id}
+              key={budget._id || budget.id}
               category={budget.category}
               spent={categoryTotals[budget.category] || 0}
               limit={budget.limit}
