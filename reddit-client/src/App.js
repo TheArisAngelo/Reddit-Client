@@ -333,10 +333,6 @@ function HomePage({ auth, onLogout }) {
     }
   }, [auth?.token]);
 
-  useEffect(() => {
-    setBalanceInput(String(budgetData.currentBalance ?? 0));
-  }, [budgetData.currentBalance]);
-
   const handleAddTransaction = async (newTransaction) => {
     try {
       const res = await fetch(`${API}/transactions`, {
@@ -373,10 +369,11 @@ function HomePage({ auth, onLogout }) {
 
   const handleSetCurrentBalance = async () => {
     const parsedBalance = parseInt(balanceInput, 10);
+    console.log("Parsed balance:", parsedBalance);
     if (
       balanceInput.trim() === "" ||
       !Number.isInteger(parsedBalance) ||
-      parsedBalance < 0
+      parsedBalance <= 0
     )
       return;
 
@@ -387,10 +384,13 @@ function HomePage({ auth, onLogout }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify({ currentBalance: parsedBalance }),
+        body: JSON.stringify({ addBalance: parsedBalance }),
       });
+      console.log("Response status:", res.status);
       const updated = await res.json();
-      setBudgetData(updated);
+      console.log("Updated data from server:", updated);
+      setBudgetData({ ...updated });
+      setBalanceInput("");
     } catch (err) {
       console.error("Failed to update balance", err);
     }
@@ -525,10 +525,9 @@ function HomePage({ auth, onLogout }) {
           <section className="panel-card current-balance-editor">
             <div className="current-balance-editor-head">
               <div>
-                <h2>Set Current Balance</h2>
+                <h2>Add to Balance</h2>
                 <p className="current-balance-editor-text">
-                  Enter your balance for today. New transactions will
-                  automatically update it.
+                  Enter an amount to add to your current balance.
                 </p>
               </div>
             </div>
@@ -540,7 +539,7 @@ function HomePage({ auth, onLogout }) {
                   type="number"
                   min="0"
                   step="1"
-                  placeholder="Enter your current balance"
+                  placeholder="Enter amount to add"
                   value={balanceInput}
                   onChange={(e) => setBalanceInput(e.target.value)}
                 />
@@ -583,7 +582,7 @@ function HomePage({ auth, onLogout }) {
           />
         </section>
 
-        {activeTab === "dashboard" && (
+        {/* {activeTab === "dashboard" && (
           <section className="dashboard-grid">
             <BudgetsTab
               budgets={budgets}
@@ -592,7 +591,7 @@ function HomePage({ auth, onLogout }) {
             />
             <SavingsTab savingsGoals={savingsGoals} />
           </section>
-        )}
+        )} */}
 
         {activeTab === "transactions" && (
           <TransactionsTab
