@@ -27,6 +27,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    currentBalance: {
+      type: Number,
+      default: 0,
+    },
+    transactions: {
+      type: Array,
+      default: [],
+    },
+    budgets: {
+      type: Array,
+      default: [],
+    },
+    savingsGoals: {
+      type: Array,
+      default: [],
+    },
   },
   { timestamps: true },
 );

@@ -6,10 +6,16 @@ const router = express.Router();
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+    let budgetData = await BudgetData.findOne({ userId: req.user.userId });
 
     if (!budgetData) {
-      return res.status(404).json({ message: "Budget data not found" });
+      budgetData = await BudgetData.create({
+        userId: req.user.userId,
+        currentBalance: 0,
+        transactions: [],
+        budgets: [],
+        savingsGoals: [],
+      });
     }
 
     res.json(budgetData);
@@ -25,7 +31,7 @@ router.put("/balance", authMiddleware, async (req, res) => {
     const updated = await BudgetData.findOneAndUpdate(
       { userId: req.user.userId },
       { currentBalance },
-      { new: true },
+      { new: true, upsert: true },
     );
 
     res.json(updated);
@@ -62,6 +68,7 @@ router.post("/transactions", authMiddleware, async (req, res) => {
 
 router.post("/budgets", authMiddleware, async (req, res) => {
   try {
+    console.log("Budget received:", req.body);
     const newBudget = req.body;
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
