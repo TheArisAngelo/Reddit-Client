@@ -26,17 +26,23 @@ router.get("/", authMiddleware, async (req, res) => {
 
 router.put("/balance", authMiddleware, async (req, res) => {
   try {
-    const { currentBalance } = req.body;
+    const { addBalance } = req.body;
+    console.log("addBalance received:", addBalance, typeof addBalance);
 
-    const updated = await BudgetData.findOneAndUpdate(
-      { userId: req.user.userId },
-      { currentBalance },
-      { new: true, upsert: true },
-    );
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
 
-    res.json(updated);
+    if (!budgetData) {
+      return res.status(404).json({ message: "Budget data not found" });
+    }
+
+    budgetData.currentBalance =
+      (budgetData.currentBalance || 0) + Number(addBalance);
+    await budgetData.save();
+
+    res.json(budgetData);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Balance update error:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
