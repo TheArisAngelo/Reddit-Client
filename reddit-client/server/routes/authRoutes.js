@@ -103,4 +103,28 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { username, newPassword } = req.body;
+
+    if (!username || !newPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: "Username not found." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password reset successful." });
+  } catch (error) {
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
 module.exports = router;

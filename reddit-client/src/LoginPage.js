@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./App.css";
+import { FaLock, FaLockOpen } from "react-icons/fa";
 
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 
@@ -145,7 +146,11 @@ export default function LoginPage({ onLogin }) {
                   }}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? (
+                    <FaLockOpen color="#7c3aed" />
+                  ) : (
+                    <FaLock color="#7c3aed" />
+                  )}
                 </button>
               </div>
             </label>
