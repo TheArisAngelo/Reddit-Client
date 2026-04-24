@@ -6,6 +6,8 @@ import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
 import ForgotPassword from "./ForgotPassword";
 import BudgetsTab from "./BudgetsTab";
+import InsightsTab from "./InsightsTab";
+import ChartsTab from "./ChartsTab";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
@@ -512,6 +514,18 @@ function HomePage({ auth, onLogout }) {
           >
             Savings
           </button>
+          <button
+            className={activeTab === "insights" ? "active" : ""}
+            onClick={() => setActiveTab("insights")}
+          >
+            Insights
+          </button>
+          <button
+            className={activeTab === "charts" ? "active" : ""}
+            onClick={() => setActiveTab("charts")}
+          >
+            Charts
+          </button>
         </div>
         <div className="auth-status">
           <span>
@@ -521,7 +535,7 @@ function HomePage({ auth, onLogout }) {
       </header>
 
       <main className="budget-main">
-        {activeTab !== "budgets" && (
+        {activeTab !== "budgets" && activeTab !== "insights" &&  activeTab !== "charts" &&(
           <section className="panel-card current-balance-editor">
             <div className="current-balance-editor-head">
               <div>
@@ -582,17 +596,6 @@ function HomePage({ auth, onLogout }) {
           />
         </section>
 
-        {/* {activeTab === "dashboard" && (
-          <section className="dashboard-grid">
-            <BudgetsTab
-              budgets={budgets}
-              categoryTotals={categoryTotals}
-              onAddBudget={handleAddBudget}
-            />
-            <SavingsTab savingsGoals={savingsGoals} />
-          </section>
-        )} */}
-
         {activeTab === "transactions" && (
           <TransactionsTab
             transactions={transactions}
@@ -608,7 +611,32 @@ function HomePage({ auth, onLogout }) {
           />
         )}
 
+        {activeTab === "dashboard" && (
+          <InsightsTab
+            transactions={transactions}
+            budgets={budgets}
+            categoryTotals={categoryTotals}
+            currentBalance={currentBalance}
+          />
+        )}
+
         {activeTab === "savings" && <SavingsTab savingsGoals={savingsGoals} />}
+
+        {activeTab === "insights" && (
+          <InsightsTab
+            transactions={transactions}
+            budgets={budgets}
+            categoryTotals={categoryTotals}
+            currentBalance={currentBalance}
+          />
+        )}
+
+        {activeTab === "charts" && (
+          <ChartsTab
+            transactions={transactions}
+            currentBalance={currentBalance}
+          />
+        )}
       </main>
     </div>
   );

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./App.css";
-
-const USER_STORAGE_KEY = "reddit-client-user";
+import { FaLock, FaLockOpen } from "react-icons/fa";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -15,6 +15,8 @@ export default function ForgotPassword() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -28,7 +30,7 @@ export default function ForgotPassword() {
     if (success) setSuccess("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const username = formData.username.trim();
@@ -55,30 +57,19 @@ export default function ForgotPassword() {
       return;
     }
 
-    const savedUserRaw = localStorage.getItem(USER_STORAGE_KEY);
-    const savedUser = savedUserRaw ? JSON.parse(savedUserRaw) : null;
+    try {
+      await axios.post("http://localhost:5000/api/auth/reset-password", {
+        username,
+        newPassword,
+      });
 
-    if (!savedUser) {
-      setError("No account found. Please sign up first.");
-      return;
+      setSuccess("Password reset successful. Redirecting to login...");
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Reset failed. Please try again.",
+      );
     }
-
-    if (savedUser.username !== username) {
-      setError("Username not found.");
-      return;
-    }
-
-    const updatedUser = {
-      ...savedUser,
-      password: newPassword,
-    };
-
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-    setSuccess("Password reset successful. Redirecting to login...");
-
-    setTimeout(() => {
-      navigate("/login");
-    }, 1500);
   };
 
   return (
@@ -119,24 +110,82 @@ export default function ForgotPassword() {
 
               <label className="create-field">
                 <span>New Password</span>
-                <input
-                  type="password"
-                  name="newPassword"
-                  placeholder="Enter new password"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    name="newPassword"
+                    placeholder="Enter new password"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    style={{ width: "100%", paddingRight: "40px" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "#888",
+                      fontSize: "18px",
+                      lineHeight: 1,
+                    }}
+                    aria-label={
+                      showNewPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showNewPassword ? (
+                      <FaLockOpen color="#7c3aed" />
+                    ) : (
+                      <FaLock color="#7c3aed" />
+                    )}
+                  </button>
+                </div>
               </label>
 
               <label className="create-field">
                 <span>Confirm New Password</span>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm new password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    placeholder="Confirm new password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    style={{ width: "100%", paddingRight: "40px" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "#888",
+                      fontSize: "18px",
+                      lineHeight: 1,
+                    }}
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showConfirmPassword ? (
+                      <FaLockOpen color="#7c3aed" />
+                    ) : (
+                      <FaLock color="#7c3aed" />
+                    )}
+                  </button>
+                </div>
               </label>
 
               {error ? <div className="lane-error">{error}</div> : null}
