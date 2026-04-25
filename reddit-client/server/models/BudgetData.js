@@ -7,19 +7,7 @@ const transactionSchema = new mongoose.Schema(
     date: String,
     category: {
       type: String,
-      enum: [
-        "Food",
-        "Transport",
-        "Shopping",
-        "Rent",
-        "Utilities",
-        "Health",
-        "Entertainment",
-        "Savings",
-        "Salary",
-        "Other",
-      ],
-      default: "Other",
+      default: "Other", // ← remove the enum entirely
     },
     type: String,
     tags: { type: [String], default: [] },

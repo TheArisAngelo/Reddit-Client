@@ -106,6 +106,7 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
 
   // Filtered & searched list
   const filtered = useMemo(() => {
+    if (!transactions || !Array.isArray(transactions)) return [];
     return [...transactions]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .filter((t) => {
@@ -116,7 +117,7 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
           (t.tags || []).some((tag) => tag.toLowerCase().includes(q));
         const matchType = filterType === "all" || t.type === filterType;
         const matchCat =
-          filterCategory === "all" || t.category === filterCategory;
+          filterCategory === "all" || t.category === filterCategory || (filterCategory === "Other" && !CATEGORIES.includes(t.category));
         return matchSearch && matchType && matchCat;
       });
   }, [transactions, search, filterType, filterCategory]);
