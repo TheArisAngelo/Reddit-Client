@@ -92,4 +92,30 @@ router.post("/budgets", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/budgets/:budgetId/deposits", authMiddleware, async (req, res) => {
+  try {
+    const { budgetId } = req.params;
+    const { amount, note, date } = req.body;
+
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+
+    if (!budgetData) {
+      return res.status(404).json({ message: "Budget data not found" });
+    }
+
+    const budget = budgetData.budgets.id(budgetId);
+
+    if (!budget) {
+      return res.status(404).json({ message: "Budget not found" });
+    }
+
+    budget.deposits.push({ amount, note, date });
+    await budgetData.save();
+
+    res.json(budgetData);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

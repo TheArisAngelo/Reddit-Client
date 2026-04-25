@@ -175,6 +175,25 @@ function HomePage({ auth, onLogout }) {
     }
   }, [auth?.token]);
 
+  const handleAddDeposit = async (budgetId, deposit) => {
+    try {
+      const res = await fetch(`${API}/budgets/${budgetId}/deposits`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(deposit),
+      });
+      const updated = await res.json();
+      if (updated && Array.isArray(updated.budgets)) {
+        setBudgetData(updated);
+      }
+    } catch (err) {
+      console.error("Failed to save deposit", err);
+    }
+  };
+
   const handleAddTransaction = async (newTransaction) => {
     try {
       const res = await fetch(`${API}/transactions`, {
@@ -459,6 +478,7 @@ function HomePage({ auth, onLogout }) {
             budgets={budgets}
             categoryTotals={categoryTotals}
             onAddBudget={handleAddBudget}
+            onAddDeposit={handleAddDeposit}
           />
         )}
 
