@@ -337,7 +337,7 @@ function HomePage({ auth, onLogout }) {
       <SideNav auth={auth} onLogout={onLogout} />
 
       <header className="budget-header">
-        <h1>Personal Budget Tracker</h1>
+        <h1>SpendWise</h1>
         <div className="tab-nav">
           <button
             className={activeTab === "dashboard" ? "active" : ""}
