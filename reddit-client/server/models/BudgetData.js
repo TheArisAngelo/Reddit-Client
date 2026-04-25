@@ -16,11 +16,22 @@ const transactionSchema = new mongoose.Schema(
   { _id: true },
 );
 
+const depositSchema = new mongoose.Schema(
+  {
+    amount: Number,
+    note: String,
+    date: String,
+  },
+  { _id: false },
+);
+
 const budgetSchema = new mongoose.Schema(
   {
     category: String,
     limit: Number,
     targetDate: String,
+    period: { type: String, default: "monthly" },
+    deposits: { type: [depositSchema], default: [] },
   },
   { _id: true },
 );
