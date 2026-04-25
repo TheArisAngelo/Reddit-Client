@@ -186,7 +186,11 @@ function HomePage({ auth, onLogout }) {
         body: JSON.stringify(newTransaction),
       });
       const updated = await res.json();
-      setBudgetData(updated);
+      if (updated && Array.isArray(updated.transactions)) {
+        setBudgetData(updated);
+      } else {
+        console.error("Unexpected response from server:", updated);
+      }
     } catch (err) {
       console.error("Failed to add transaction", err);
     }
@@ -238,7 +242,12 @@ function HomePage({ auth, onLogout }) {
     }
   };
 
-  const { currentBalance, transactions, budgets, savingsGoals } = budgetData;
+  const {
+    currentBalance,
+    transactions = [],
+    budgets = [],
+    savingsGoals = [],
+  } = budgetData;
 
   const totalIncome = useMemo(() => {
     return transactions
@@ -375,39 +384,41 @@ function HomePage({ auth, onLogout }) {
       </header>
 
       <main className="budget-main">
-        {activeTab !== "budgets" && activeTab !== "insights" &&  activeTab !== "charts" &&(
-          <section className="panel-card current-balance-editor">
-            <div className="current-balance-editor-head">
-              <div>
-                <h2>Add to Balance</h2>
-                <p className="current-balance-editor-text">
-                  Enter an amount to add to your current balance.
-                </p>
+        {activeTab !== "budgets" &&
+          activeTab !== "insights" &&
+          activeTab !== "charts" && (
+            <section className="panel-card current-balance-editor">
+              <div className="current-balance-editor-head">
+                <div>
+                  <h2>Add to Balance</h2>
+                  <p className="current-balance-editor-text">
+                    Enter an amount to add to your current balance.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="current-balance-form">
-              <div className="transaction-field">
-                <label htmlFor="currentBalance">Current Balance</label>
-                <input
-                  id="currentBalance"
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="Enter amount to add"
-                  value={balanceInput}
-                  onChange={(e) => setBalanceInput(e.target.value)}
-                />
+              <div className="current-balance-form">
+                <div className="transaction-field">
+                  <label htmlFor="currentBalance">Current Balance</label>
+                  <input
+                    id="currentBalance"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Enter amount to add"
+                    value={balanceInput}
+                    onChange={(e) => setBalanceInput(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="transaction-submit-btn"
+                  onClick={handleSetCurrentBalance}
+                >
+                  Save Balance
+                </button>
               </div>
-              <button
-                type="button"
-                className="transaction-submit-btn"
-                onClick={handleSetCurrentBalance}
-              >
-                Save Balance
-              </button>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
         <section className="summary-grid">
           <SummaryCard
