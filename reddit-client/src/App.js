@@ -409,15 +409,15 @@ function HomePage({ auth, onLogout }) {
             <section className="panel-card current-balance-editor">
               <div className="current-balance-editor-head">
                 <div>
-                  <h2>Add to Balance</h2>
+                  <h2>Income</h2>
                   <p className="current-balance-editor-text">
-                    Enter an amount to add to your current balance.
+                    Enter an amount to add to your current Income.
                   </p>
                 </div>
               </div>
               <div className="current-balance-form">
                 <div className="transaction-field">
-                  <label htmlFor="currentBalance">Current Balance</label>
+                  <label htmlFor="currentBalance">Current Income</label>
                   <input
                     id="currentBalance"
                     type="number"
@@ -433,7 +433,7 @@ function HomePage({ auth, onLogout }) {
                   className="transaction-submit-btn"
                   onClick={handleSetCurrentBalance}
                 >
-                  Save Balance
+                  Add to Income
                 </button>
               </div>
             </section>
@@ -453,7 +453,7 @@ function HomePage({ auth, onLogout }) {
             className="expense-card"
           />
           <SummaryCard
-            title="Current Balance"
+            title="Current Income"
             amount={currency(balance)}
             subtitle="Your saved balance updated by transactions"
             className="balance-card"
@@ -462,7 +462,8 @@ function HomePage({ auth, onLogout }) {
             title="Spending Status"
             amount={spendingStatus}
             subtitle={`${spendingRate.toFixed(0)}% of income spent`}
-            className="status-card"
+            statusText={`Total Expenses: ${currency(totalExpenses)}`}
+            className={`status-card status-${spendingStatus.toLowerCase()}`}
           />
         </section>
 

@@ -169,9 +169,9 @@ body {
 .balance-card::before {
   background: #60a5fa;
 }
-.status-card::before {
+/* .status-card::before {
   background: var(--success);
-}
+} */
 
 .summary-title {
   margin: 0 0 12px;
@@ -2048,6 +2048,33 @@ body {
     width: 100%;
   }
 }
+
+/* =========================
+   Status Text & Card
+========================= */
+.status-card.status-good {
+  border-left: 4px solid #00c896 !important;
+  background-color: #0d2e24;
+}
+
+.status-card.status-warning {
+  border-left:4px solid #f5a623 !important;
+  background-color: #2e1f0a;
+}
+
+.status-card.status-critical {
+  border-left: 4px solid #e84040 !important;
+  background-color: #2e0a0a;
+}
+
+.status-card.status-card.status-warning .summary-amount {
+  color: #f5a623;
+}
+
+.status-card.status-critical .summary-amount {
+  color: #e84040;
+}
+
 
 /* =========================
    RESPONSIVE — 1100px
