@@ -50,8 +50,11 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
 
   // Search & Filter
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState("expense");
   const [filterCategory, setFilterCategory] = useState("all");
+
+  // Date Period Filter
+  const [filterPeriod, setFilterPeriod] = useState("all");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -117,10 +120,37 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
           (t.tags || []).some((tag) => tag.toLowerCase().includes(q));
         const matchType = filterType === "all" || t.type === filterType;
         const matchCat =
-          filterCategory === "all" || t.category === filterCategory || (filterCategory === "Other" && !CATEGORIES.includes(t.category));
-        return matchSearch && matchType && matchCat;
+          filterCategory === "all" ||
+          t.category === filterCategory ||
+          (filterCategory === "Other" && !CATEGORIES.includes(t.category));
+
+        // Date period filter
+        let matchDate = true;
+        if (filterPeriod !== "all") {
+          const now = new Date();
+          const today = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+          );
+          const [year, month, day] = t.date.split("-").map(Number);
+          const txDate = new Date(year, month - 1, day);
+          if (filterPeriod === "week") {
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            matchDate = txDate >= weekAgo && txDate <= today;
+          } else if (filterPeriod === "month") {
+            matchDate =
+              txDate.getMonth() === today.getMonth() &&
+              txDate.getFullYear() === today.getFullYear();
+          } else if (filterPeriod === "year") {
+            matchDate = txDate.getFullYear() === today.getFullYear();
+          }
+        }
+
+        return matchSearch && matchType && matchCat && matchDate;
       });
-  }, [transactions, search, filterType, filterCategory]);
+  }, [transactions, search, filterType, filterCategory, filterPeriod]);
 
   return (
     <section className="panel-card">
@@ -166,7 +196,6 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
             />
           </div>
 
-          {/* Dropdown instead of free-text */}
           <div className="transaction-field">
             <label htmlFor="category">Category</label>
             <select
@@ -196,7 +225,6 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
             </select>
           </div>
 
-          {/* Tags */}
           <div className="transaction-field">
             <label htmlFor="tags">Tags (comma-separated)</label>
             <input
@@ -210,7 +238,6 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
           </div>
         </div>
 
-        {/* Recurring checkbox */}
         <label className="recurring-label">
           <input
             type="checkbox"
@@ -254,6 +281,16 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
               {CATEGORY_ICONS[c]} {c}
             </option>
           ))}
+        </select>
+
+        <select
+          value={filterPeriod}
+          onChange={(e) => setFilterPeriod(e.target.value)}
+        >
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+          <option value="all">All Time</option>
         </select>
       </div>
 
