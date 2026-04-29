@@ -34,6 +34,30 @@ function currency(amount) {
   return `₱${Math.round(Number(amount || 0))}`;
 }
 
+function filterTransactions(transactions, period) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return transactions.filter((t) => {
+    const [year, month, day] = t.date.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    if (period === "week") {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 7);
+      return date >= weekAgo && date <= today;
+    } else if (period === "month") {
+      return (
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
+      );
+    } else if (period === "year") {
+      return date.getFullYear() === today.getFullYear();
+    }
+    return true;
+  });
+}
+
 function ProtectedRoute({ isLoggedIn, children }) {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
@@ -151,6 +175,7 @@ function HomePage({ auth, onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
   const [balanceInput, setBalanceInput] = useState("");
+  const [period, setPeriod] = useState("month");
 
   // ✅ Load data from MongoDB with safety check
   useEffect(() => {
@@ -268,38 +293,61 @@ function HomePage({ auth, onLogout }) {
     savingsGoals = [],
   } = budgetData;
 
+  const filteredTransactions = useMemo(
+    () => filterTransactions(transactions, period),
+    [transactions, period],
+  );
+
   const totalIncome = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((item) => item.type === "income")
       .reduce((sum, item) => sum + item.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const totalExpenses = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((item) => item.type === "expense")
       .reduce((sum, item) => sum + item.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const balance = currentBalance;
-  const incomeCount = transactions.filter(
+  const incomeCount = filteredTransactions.filter(
     (item) => item.type === "income",
   ).length;
-  const expenseCount = transactions.filter(
+  const expenseCount = filteredTransactions.filter(
     (item) => item.type === "expense",
   ).length;
+
+  const filteredIncome = filteredTransactions
+    .filter((item) => item.type === "income")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const filteredCurrentBalance =
+    period === "all"
+      ? currentBalance
+      : filteredTransactions
+          .filter((item) => item.type === "income")
+          .reduce((sum, item) => sum + item.amount, 0);
+
   const spendingRate =
-    totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
+    currentBalance > 0 ? (totalExpenses / currentBalance) * 100 : 0;
   const spendingStatus =
     spendingRate < 50 ? "Good" : spendingRate < 80 ? "Warning" : "Critical";
 
   const categoryTotals = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((item) => item.type === "expense")
       .reduce((acc, item) => {
         acc[item.category] = (acc[item.category] || 0) + item.amount;
         return acc;
       }, {});
-  }, [transactions]);
+  }, [filteredTransactions]);
+
+  const biggestExpenseCategory = useMemo(() => {
+    const entries = Object.entries(categoryTotals);
+    if (entries.length === 0) return null;
+    return entries.reduce((max, curr) => (curr[1] > max[1] ? curr : max));
+  }, [categoryTotals]);
 
   if (!auth.isLoggedIn) {
     return (
@@ -439,11 +487,29 @@ function HomePage({ auth, onLogout }) {
             </section>
           )}
 
+        <div className="period-filter">
+          <label htmlFor="period-select">Filter by: </label>
+          <select
+            id="period-select"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+          >
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+            <option value="all">All Time</option>
+          </select>
+        </div>
+
         <section className="summary-grid">
           <SummaryCard
-            title="Total Income"
-            amount={currency(totalIncome)}
-            subtitle={`${incomeCount} income transactions`}
+            title="Biggest Expense"
+            amount={biggestExpenseCategory ? biggestExpenseCategory[0] : "None"}
+            subtitle={
+              biggestExpenseCategory
+                ? currency(biggestExpenseCategory[1])
+                : "No Expenses yet"
+            }
             className="income-card"
           />
           <SummaryCard
@@ -454,8 +520,8 @@ function HomePage({ auth, onLogout }) {
           />
           <SummaryCard
             title="Current Income"
-            amount={currency(balance)}
-            subtitle="Your saved balance updated by transactions"
+            amount={currency(period === "all" ? balance : filteredCurrentBalance)}
+            subtitle={period === "all" ? "Total income (all time)" : `Income for selected period`}
             className="balance-card"
           />
           <SummaryCard
@@ -485,10 +551,11 @@ function HomePage({ auth, onLogout }) {
 
         {activeTab === "dashboard" && (
           <InsightsTab
-            transactions={transactions}
+            transactions={filteredTransactions}
             budgets={budgets}
             categoryTotals={categoryTotals}
-            currentBalance={currentBalance}
+            currentBalance={filteredCurrentBalance}
+            period={period}
           />
         )}
 
@@ -496,10 +563,11 @@ function HomePage({ auth, onLogout }) {
 
         {activeTab === "insights" && (
           <InsightsTab
-            transactions={transactions}
+            transactions={filteredTransactions}
             budgets={budgets}
             categoryTotals={categoryTotals}
-            currentBalance={currentBalance}
+            currentBalance={filteredCurrentBalance}
+            period={period}
           />
         )}
 

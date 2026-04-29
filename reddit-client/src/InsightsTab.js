@@ -4,70 +4,73 @@ function currency(amount) {
   return `₱${Math.round(Number(amount || 0))}`;
 }
 
+const PERIOD_LABELS = {
+  week: "this week",
+  month: "this month",
+  year: "this year",
+  all: "overall",
+};
+
 export default function InsightsTab({
   transactions,
   budgets,
   categoryTotals,
   currentBalance,
+  period = "month",
 }) {
   const insights = useMemo(() => {
     const result = [];
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const periodLabel = PERIOD_LABELS[period] || "this period";
 
     const expenses = transactions.filter((t) => t.type === "expense");
+    const incomes = transactions.filter((t) => t.type === "income");
 
-    // This month vs last month per category
-    const thisMonthByCategory = {};
-    const lastMonthByCategory = {};
-
+    const expensesByCategory = {};
     expenses.forEach((t) => {
-      const d = new Date(t.date);
-      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-        thisMonthByCategory[t.category] =
-          (thisMonthByCategory[t.category] || 0) + t.amount;
-      }
-      if (d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear) {
-        lastMonthByCategory[t.category] =
-          (lastMonthByCategory[t.category] || 0) + t.amount;
-      }
+      expensesByCategory[t.category] =
+        (expensesByCategory[t.category] || 0) + t.amount;
     });
 
-    // Spending increase/decrease per category
-    Object.keys(thisMonthByCategory).forEach((cat) => {
-      const thisAmt = thisMonthByCategory[cat];
-      const lastAmt = lastMonthByCategory[cat] || 0;
-      if (lastAmt > 0) {
-        const diff = ((thisAmt - lastAmt) / lastAmt) * 100;
-        if (diff >= 20) {
-          result.push({
-            type: "warning",
-            text: `You spent ${Math.round(diff)}% more on ${cat} this month than last month.`,
-          });
-        } else if (diff <= -20) {
-          result.push({
-            type: "success",
-            text: `Great job! You spent ${Math.abs(Math.round(diff))}% less on ${cat} compared to last month.`,
-          });
-        }
-      }
-    });
+    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0);
 
-    // Spending category this month
-    const topCategory = Object.entries(thisMonthByCategory).sort(
-      (a, b) => b[1] - a[1],
-    )[0];
-    if (topCategory) {
+    if (transactions.length === 0) {
       result.push({
         type: "info",
-        text: `Your top spending category this month is ${topCategory[0]} at ${currency(topCategory[1])}.`,
+        text: `No transactions found for ${periodLabel}. Try selecting a different period or add new transactions.`,
+      });
+      return result;
+    }
+
+    const topCategoryEntries = Object.entries(expensesByCategory).sort(
+      (a, b) => b[1] - a[1],
+    );
+    if (topCategoryEntries.length > 0) {
+      const [catName, catAmount] = topCategoryEntries[0];
+      result.push({
+        type: "info",
+        text: `Your top spending category ${periodLabel} is ${catName} at ${currency(catAmount)}.`,
       });
     }
 
-    // Budget overspend warning
+    if (currentBalance > 0 && totalExpenses > 0) {
+      const savingsRate = Math.max(
+        0,
+        ((currentBalance - totalExpenses) / currentBalance) * 100,
+      );
+      if (savingsRate >= 50) {
+        result.push({
+          type: "success",
+          text: `Great! You're saving ${Math.round(savingsRate)}% of your income ${periodLabel}.`,
+        });
+      } else {
+        result.push({
+          type: "warning",
+          text: `You're only saving ${Math.round(savingsRate)}% of your income ${periodLabel}. Try to reduce expenses.`,
+        });
+      }
+    }
+
     budgets.forEach((budget) => {
       const spent = categoryTotals[budget.category] || 0;
       const percentage = budget.limit > 0 ? (spent / budget.limit) * 100 : 0;
@@ -84,57 +87,26 @@ export default function InsightsTab({
       }
     });
 
-    // Estimated end of month balance
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const dayOfMonth = now.getDate();
-    const thisMonthExpenses = expenses
-      .filter((t) => {
-        const d = new Date(t.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    if (dayOfMonth > 0 && thisMonthExpenses > 0) {
-      const dailyAvg = thisMonthExpenses / dayOfMonth;
-      const remainingDays = daysInMonth - dayOfMonth;
-      const projectedAdditional = dailyAvg * remainingDays;
-      const estimatedBalance = currentBalance - projectedAdditional;
-      result.push({
-        type: "info",
-        text: `Estimated end-of-month balance: ${currency(Math.round(estimatedBalance))} based on your current spending rate.`,
+    if (totalExpenses > 0) {
+      expenses.forEach((t) => {
+        if (t.amount / totalExpenses > 0.5) {
+          result.push({
+            type: "warning",
+            text: `Unusual transaction detected: "${t.title}" accounts for over 50% of your expenses ${periodLabel}.`,
+          });
+        }
       });
     }
 
-    // Unusual transaction
-    const thisMonthTotal = Object.values(thisMonthByCategory).reduce(
-      (a, b) => a + b,
-      0,
-    );
-    expenses.forEach((t) => {
-      const d = new Date(t.date);
-      if (
-        d.getMonth() === currentMonth &&
-        d.getFullYear() === currentYear &&
-        thisMonthTotal > 0 &&
-        t.amount / thisMonthTotal > 0.5
-      ) {
-        result.push({
-          type: "warning",
-          text: `Unusual transaction detected: "${t.title}" accounts for over 50% of your monthly expenses.`,
-        });
-      }
-    });
-
-    // No transactions yet
-    if (transactions.length === 0) {
+    if (totalIncome > 0 && totalExpenses > totalIncome) {
       result.push({
-        type: "info",
-        text: "No transactions yet. Start adding your income and expenses to get insights!",
+        type: "danger",
+        text: `You've spent ${currency(totalExpenses - totalIncome)} more than you earned ${periodLabel}. Review your expenses!`,
       });
     }
 
     return result;
-  }, [transactions, budgets, categoryTotals, currentBalance]);
+  }, [transactions, budgets, categoryTotals, currentBalance, period]);
 
   const iconMap = {
     info: "💡",
@@ -149,13 +121,12 @@ export default function InsightsTab({
     danger: "insight-danger",
     success: "insight-success",
   };
-
   return (
     <section className="panel-card">
       <h2>Smart Insights</h2>
       {insights.length === 0 ? (
         <p className="empty-text">
-          No insights available yet. Add more transactions to get started
+          No insights available yet. Add more transactions to get started.
         </p>
       ) : (
         <div className="insights-list">
