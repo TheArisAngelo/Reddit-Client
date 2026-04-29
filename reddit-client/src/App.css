@@ -2058,7 +2058,7 @@ body {
 }
 
 .status-card.status-warning {
-  border-left:4px solid #f5a623 !important;
+  border-left: 4px solid #f5a623 !important;
   background-color: #2e1f0a;
 }
 
@@ -2075,6 +2075,36 @@ body {
   color: #e84040;
 }
 
+/* =========================
+   Date Card Filter
+========================= */
+.period-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0 0.25rem;
+}
+
+.period-filter label {
+  font-size: 0.9rem;
+  color: var(--text-muted, #aaa);
+}
+
+.period-filter select {
+  background: var(--card-bg, #1e2235);
+  color: var(--text-main, #fff);
+  border: 1px solid var(--border, #2e3250);
+  border-radius: 8px;
+  padding: 0.4rem, 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.period-filter select:focus {
+  outline: none;
+  border-color: var(--accent, #0035ff);
+}
 
 /* =========================
    RESPONSIVE — 1100px
