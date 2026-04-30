@@ -1,10 +1,13 @@
 const express = require("express");
 const BudgetData = require("../models/BudgetData");
 const authMiddleware = require("../middleware/authMiddleware");
+const cache = require("../middleware/cache");
 
 const router = express.Router();
 
-router.get("/", authMiddleware, async (req, res) => {
+const CACHE_KEY = "/api/budget";
+
+router.get("/", authMiddleware, cache, async (req, res) => {
   try {
     let budgetData = await BudgetData.findOne({ userId: req.user.userId });
 
@@ -39,6 +42,7 @@ router.put("/balance", authMiddleware, async (req, res) => {
       (budgetData.currentBalance || 0) + Number(addBalance);
     await budgetData.save();
 
+    cache.del(CACHE_KEY);
     res.json(budgetData);
   } catch (error) {
     console.error("Balance update error:", error);
@@ -66,6 +70,7 @@ router.post("/transactions", authMiddleware, async (req, res) => {
 
     await budgetData.save();
 
+    cache.del(CACHE_KEY);
     res.json(budgetData);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -86,9 +91,10 @@ router.post("/budgets", authMiddleware, async (req, res) => {
     budgetData.budgets.unshift(newBudget);
     await budgetData.save();
 
+    cache.del(CACHE_KEY);
     res.json(budgetData);
   } catch (error) {
-    res.status(500)({ message: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -112,6 +118,7 @@ router.post("/budgets/:budgetId/deposits", authMiddleware, async (req, res) => {
     budget.deposits.push({ amount, note, date });
     await budgetData.save();
 
+    cache.del(CACHE_KEY);
     res.json(budgetData);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
