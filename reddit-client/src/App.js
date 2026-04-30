@@ -12,6 +12,8 @@ import TransactionsTab from "./TransactionsTab";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
+const CACHE_KEY = "budget-data-cache";
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const DEFAULT_DATA = {
   currentBalance: 0,
@@ -28,6 +30,36 @@ function getStoredAuth() {
   } catch (error) {
     return { isLoggedIn: false, username: "" };
   }
+}
+
+function getCachedBudgetData() {
+  try {
+    const item = localStorage.getItem(CACHE_KEY);
+    if (!item) return null;
+    const { data, timestamp } = JSON.parse(item);
+    if (Date.now() - timestamp > CACHE_TTL) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedBudgetData(data) {
+  try {
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ data, timestamp: Date.now() }),
+    );
+  } catch {
+    // storage full or unavailable, skip caching
+  }
+}
+
+function clearBudgetCache() {
+  localStorage.removeItem(CACHE_KEY);
 }
 
 function currency(amount) {
@@ -177,9 +209,15 @@ function HomePage({ auth, onLogout }) {
   const [balanceInput, setBalanceInput] = useState("");
   const [period, setPeriod] = useState("month");
 
-  // ✅ Load data from MongoDB with safety check
+  // Load data — use cache if fresh, otherwise fetch from API
   useEffect(() => {
     if (auth?.token) {
+      const cached = getCachedBudgetData();
+      if (cached) {
+        setBudgetData(cached);
+        return;
+      }
+
       fetch(API, {
         headers: { Authorization: `Bearer ${auth.token}` },
       })
@@ -187,6 +225,7 @@ function HomePage({ auth, onLogout }) {
         .then((data) => {
           if (data && data.transactions) {
             setBudgetData(data);
+            setCachedBudgetData(data);
           } else {
             setBudgetData(DEFAULT_DATA);
           }
@@ -213,6 +252,7 @@ function HomePage({ auth, onLogout }) {
       const updated = await res.json();
       if (updated && Array.isArray(updated.budgets)) {
         setBudgetData(updated);
+        setCachedBudgetData(updated);
       }
     } catch (err) {
       console.error("Failed to save deposit", err);
@@ -221,6 +261,7 @@ function HomePage({ auth, onLogout }) {
 
   const handleAddTransaction = async (newTransaction) => {
     try {
+      clearBudgetCache(); // bust cache before mutation
       const res = await fetch(`${API}/transactions`, {
         method: "POST",
         headers: {
@@ -232,6 +273,7 @@ function HomePage({ auth, onLogout }) {
       const updated = await res.json();
       if (updated && Array.isArray(updated.transactions)) {
         setBudgetData(updated);
+        setCachedBudgetData(updated);
       } else {
         console.error("Unexpected response from server:", updated);
       }
@@ -242,6 +284,7 @@ function HomePage({ auth, onLogout }) {
 
   const handleAddBudget = async (newBudget) => {
     try {
+      clearBudgetCache(); // bust cache before mutation
       const res = await fetch(`${API}/budgets`, {
         method: "POST",
         headers: {
@@ -252,6 +295,7 @@ function HomePage({ auth, onLogout }) {
       });
       const updated = await res.json();
       setBudgetData(updated);
+      setCachedBudgetData(updated);
     } catch (err) {
       console.error("Failed to add budget", err);
     }
@@ -259,7 +303,6 @@ function HomePage({ auth, onLogout }) {
 
   const handleSetCurrentBalance = async () => {
     const parsedBalance = parseInt(balanceInput, 10);
-    console.log("Parsed balance:", parsedBalance);
     if (
       balanceInput.trim() === "" ||
       !Number.isInteger(parsedBalance) ||
@@ -268,6 +311,7 @@ function HomePage({ auth, onLogout }) {
       return;
 
     try {
+      clearBudgetCache(); // bust cache before mutation
       const res = await fetch(`${API}/balance`, {
         method: "PUT",
         headers: {
@@ -276,10 +320,9 @@ function HomePage({ auth, onLogout }) {
         },
         body: JSON.stringify({ addBalance: parsedBalance }),
       });
-      console.log("Response status:", res.status);
       const updated = await res.json();
-      console.log("Updated data from server:", updated);
       setBudgetData({ ...updated });
+      setCachedBudgetData({ ...updated });
       setBalanceInput("");
     } catch (err) {
       console.error("Failed to update balance", err);
@@ -311,16 +354,9 @@ function HomePage({ auth, onLogout }) {
   }, [filteredTransactions]);
 
   const balance = currentBalance;
-  const incomeCount = filteredTransactions.filter(
-    (item) => item.type === "income",
-  ).length;
   const expenseCount = filteredTransactions.filter(
     (item) => item.type === "expense",
   ).length;
-
-  const filteredIncome = filteredTransactions
-    .filter((item) => item.type === "income")
-    .reduce((sum, item) => sum + item.amount, 0);
 
   const filteredCurrentBalance =
     period === "all"
@@ -520,8 +556,14 @@ function HomePage({ auth, onLogout }) {
           />
           <SummaryCard
             title="Current Income"
-            amount={currency(period === "all" ? balance : filteredCurrentBalance)}
-            subtitle={period === "all" ? "Total income (all time)" : `Income for selected period`}
+            amount={currency(
+              period === "all" ? balance : filteredCurrentBalance,
+            )}
+            subtitle={
+              period === "all"
+                ? "Total income (all time)"
+                : "Income for selected period"
+            }
             className="balance-card"
           />
           <SummaryCard
@@ -586,11 +628,13 @@ export default function App() {
   const [auth, setAuth] = useState(getStoredAuth());
 
   const handleLogin = (authData) => {
+    clearBudgetCache(); // clear stale cache from previous session
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
     setAuth(authData);
   };
 
   const handleLogout = () => {
+    clearBudgetCache(); // clear cache on logout
     localStorage.removeItem(AUTH_STORAGE_KEY);
     setAuth({ isLoggedIn: false, username: "", token: "" });
   };
