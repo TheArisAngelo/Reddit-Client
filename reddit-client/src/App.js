@@ -208,6 +208,7 @@ function HomePage({ auth, onLogout }) {
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
   const [balanceInput, setBalanceInput] = useState("");
   const [period, setPeriod] = useState("month");
+  const [darkMode, setDarkMode] = useState(true);
 
   // Load data — use cache if fresh, otherwise fetch from API
   useEffect(() => {
@@ -433,7 +434,7 @@ function HomePage({ auth, onLogout }) {
   }
 
   return (
-    <div className="app-shell budget-app">
+    <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
       <SideNav auth={auth} onLogout={onLogout} />
 
       <header className="budget-header">
@@ -476,10 +477,34 @@ function HomePage({ auth, onLogout }) {
             Charts
           </button>
         </div>
-        <div className="auth-status">
+        <div
+          className="auth-status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            justifyContent: "center",
+          }}
+        >
           <span>
             Logged in as <strong>{auth.username}</strong>
           </span>
+          <button
+            onClick={() => setDarkMode((prev) => !prev)}
+            style={{
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
+              padding: "6px 14px",
+              color: "var(--text)",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "700",
+              transition: "0.2s ease",
+            }}
+          >
+            {darkMode ? "☀️ Light" : "🌙 Dark"}
+          </button>
         </div>
       </header>
 

@@ -19,6 +19,102 @@
   --shadow: 0 18px 45px rgba(2, 6, 23, 0.45);
 }
 
+.light-mode {
+  --bg: #f1f5f9;
+  --bg-soft: rgba(241, 245, 249, 0.72);
+  --panel: rgba(255, 255, 255, 0.85);
+  --panel-2: rgba(226, 232, 240, 0.72);
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: rgba(100, 116, 139, 0.2);
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.1);
+}
+
+.light-mode body,
+.light-mode {
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(79, 70, 229, 0.07), transparent 26%),
+    linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.light-mode .budget-header h1,
+.light-mode .panel-card h2,
+.light-mode .transaction-row h4,
+.light-mode .guest-hero-card h1,
+.light-mode .empty-savings h3,
+.light-mode .guest-feature-card h3 {
+  color: #0f172a;
+}
+
+.light-mode .tab-nav button {
+  background: rgba(241, 245, 249, 0.9);
+  color: #334155;
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.light-mode .tab-nav button:hover {
+  background: rgba(226, 232, 240, 0.9);
+}
+
+.light-mode .transaction-field input,
+.light-mode .transaction-field select,
+.light-mode .transaction-search,
+.light-mode .transaction-filters select,
+.light-mode .budget-deposit-input,
+.light-mode .period-filter select {
+  background: rgba(241, 245, 249, 0.9);
+  color: #0f172a;
+  border-color: rgba(100, 116, 139, 0.25);
+}
+
+.light-mode .transaction-field input::placeholder,
+.light-mode .transaction-search::placeholder,
+.light-mode .budget-deposit-input::placeholder {
+  color: #94a3b8;
+}
+
+.light-mode .transaction-form {
+  background: rgba(226, 232, 240, 0.5);
+}
+
+.light-mode .transaction-row,
+.light-mode .savings-goal-card,
+.light-mode .budget-progress-item,
+.light-mode .budget-deposit-form,
+.light-mode .budget-history,
+.light-mode .chart-card,
+.light-mode .budget-summary-strip {
+  background: rgba(226, 232, 240, 0.5);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.light-mode .side-nav {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.light-mode .side-nav-header h3 {
+  color: #0f172a;
+}
+
+.light-mode .side-nav-link {
+  background: rgba(241, 245, 249, 0.9);
+  color: #334155;
+}
+
+.light-mode .status-card.status-good {
+  background-color: #dcfce7;
+}
+
+.light-mode .status-card.status-warning {
+  background-color: #fef9c3;
+}
+
+.light-mode .status-card.status-critical {
+  background-color: #fee2e2;
+}
+
+
 body {
   margin: 0;
   color: var(--text);
