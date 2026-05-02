@@ -358,12 +358,9 @@ function HomePage({ auth, onLogout }) {
     (item) => item.type === "expense",
   ).length;
 
-  const filteredCurrentBalance =
-    period === "all"
-      ? currentBalance
-      : filteredTransactions
-          .filter((item) => item.type === "income")
-          .reduce((sum, item) => sum + item.amount, 0);
+  const filteredCurrentBalance = filteredTransactions
+    .filter((item) => item.type === "income")
+    .reduce((sum, item) => sum + item.amount, 0);
 
   const spendingRate =
     currentBalance > 0 ? (totalExpenses / currentBalance) * 100 : 0;
@@ -557,12 +554,12 @@ function HomePage({ auth, onLogout }) {
           <SummaryCard
             title="Current Income"
             amount={currency(
-              period === "all" ? balance : filteredCurrentBalance,
+              period === "all" ? currentBalance : filteredCurrentBalance,
             )}
             subtitle={
               period === "all"
-                ? "Total income (all time)"
-                : "Income for selected period"
+                ? `Total income (all time)`
+                : `Income for selected period`
             }
             className="balance-card"
           />
