@@ -7,7 +7,7 @@ const transactionSchema = new mongoose.Schema(
     date: String,
     category: {
       type: String,
-      default: "Other", // ← remove the enum entirely
+      default: "Other",
     },
     type: String,
     tags: { type: [String], default: [] },
@@ -40,7 +40,9 @@ const savingsGoalSchema = new mongoose.Schema(
   {
     title: String,
     target: Number,
-    saved: Number,
+    saved: { type: Number, default: 0 },
+    deadline: { type: String, default: null }, // ← added
+    category: { type: String, default: "General" }, // ← added
   },
   { _id: true },
 );

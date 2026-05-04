@@ -9,6 +9,7 @@ import BudgetsTab from "./BudgetsTab";
 import InsightsTab from "./InsightsTab";
 import ChartsTab from "./ChartsTab";
 import TransactionsTab from "./TransactionsTab";
+import SavingsTab from "./SavingsTab";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
@@ -177,32 +178,6 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
   );
 }
 
-function SavingsTab({ savingsGoals }) {
-  return (
-    <section className="panel-card savings-panel">
-      <h2>Savings Goals</h2>
-      {savingsGoals.length === 0 ? (
-        <div className="empty-savings">
-          <div className="savings-icon">◎</div>
-          <h3>No savings goals at the moment.</h3>
-          <p>Let's start saving! Set your first goal to track your progress.</p>
-        </div>
-      ) : (
-        <div className="savings-list">
-          {savingsGoals.map((goal) => (
-            <div key={goal.id} className="savings-goal-card">
-              <h4>{goal.title}</h4>
-              <p>
-                {currency(goal.saved)} saved of {currency(goal.target)}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 function HomePage({ auth, onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
@@ -281,6 +256,11 @@ function HomePage({ auth, onLogout }) {
     } catch (err) {
       console.error("Failed to add transaction", err);
     }
+  };
+
+  const handleGoalsUpdate = (updatedData) => {
+    setBudgetData(updatedData);
+    setCachedBudgetData(updatedData);
   };
 
   const handleAddBudget = async (newBudget) => {
@@ -623,7 +603,13 @@ function HomePage({ auth, onLogout }) {
           />
         )}
 
-        {activeTab === "savings" && <SavingsTab savingsGoals={savingsGoals} />}
+        {activeTab === "savings" && (
+          <SavingsTab
+            savingsGoals={savingsGoals}
+            auth={auth}
+            onGoalsUpdate={handleGoalsUpdate}
+          />
+        )}
 
         {activeTab === "insights" && (
           <InsightsTab
