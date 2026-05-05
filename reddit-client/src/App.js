@@ -10,6 +10,7 @@ import InsightsTab from "./InsightsTab";
 import ChartsTab from "./ChartsTab";
 import TransactionsTab from "./TransactionsTab";
 import SavingsTab from "./SavingsTab";
+import NotificationBell from "./NotificationBell";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
@@ -469,6 +470,7 @@ function HomePage({ auth, onLogout }) {
           <span>
             Logged in as <strong>{auth.username}</strong>
           </span>
+          <NotificationBell token={auth.token} />
           <button
             onClick={() => setDarkMode((prev) => !prev)}
             style={{
