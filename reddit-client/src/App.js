@@ -200,8 +200,17 @@ function HomePage({ auth, onLogout }) {
       })
         .then((r) => r.json())
         .then((data) => {
-          if (data && data.transactions) {
-            setBudgetData(data);
+          if (data && typeof data === "object") {
+            setBudgetData({
+              currentBalance: data.currentBalance ?? 0,
+              transactions: Array.isArray(data.transactions)
+                ? data.transactions
+                : [],
+              budgets: Array.isArray(data.budgets) ? data.budgets : [],
+              savingsGoals: Array.isArray(data.savingsGoals)
+                ? data.savingsGoals
+                : [],
+            });
             setCachedBudgetData(data);
           } else {
             setBudgetData(DEFAULT_DATA);
@@ -293,7 +302,7 @@ function HomePage({ auth, onLogout }) {
       return;
 
     try {
-      clearBudgetCache(); // bust cache before mutation
+      clearBudgetCache();
       const res = await fetch(`${API}/balance`, {
         method: "PUT",
         headers: {
@@ -303,8 +312,19 @@ function HomePage({ auth, onLogout }) {
         body: JSON.stringify({ addBalance: parsedBalance }),
       });
       const updated = await res.json();
-      setBudgetData({ ...updated });
-      setCachedBudgetData({ ...updated });
+
+      // Merge instead of replace
+      setBudgetData((prev) => ({
+        ...prev,
+        currentBalance: updated.currentBalance ?? prev.currentBalance,
+        ...(updated.transactions && { transactions: updated.transactions }),
+        ...(updated.budgets && { budgets: updated.budgets }),
+        ...(updated.savingsGoals && { savingsGoals: updated.savingsGoals }),
+      }));
+      setCachedBudgetData({
+        ...budgetData,
+        currentBalance: updated.currentBalance ?? budgetData.currentBalance,
+      });
       setBalanceInput("");
     } catch (err) {
       console.error("Failed to update balance", err);
@@ -340,12 +360,32 @@ function HomePage({ auth, onLogout }) {
     (item) => item.type === "expense",
   ).length;
 
-  const filteredCurrentBalance = filteredTransactions
+  // Derive the balance dynamically from all transactions
+  const totalAllTimeIncome = transactions
     .filter((item) => item.type === "income")
     .reduce((sum, item) => sum + item.amount, 0);
 
+  const totalAllTimeExpenses = transactions
+    .filter((item) => item.type === "expense")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const filteredCurrentBalance =
+    filteredTransactions
+      .filter((item) => item.type === "income")
+      .reduce((sum, item) => sum + item.amount, 0) -
+    filteredTransactions
+      .filter((item) => item.type === "expense")
+      .reduce((sum, item) => sum + item.amount, 0);
+
+  const allTimeIncome = transactions
+    .filter((item) => item.type === "income")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const dynamicIncome =
+    period === "all" ? allTimeIncome : filteredCurrentBalance;
+
   const spendingRate =
-    currentBalance > 0 ? (totalExpenses / currentBalance) * 100 : 0;
+    dynamicIncome > 0 ? (totalExpenses / dynamicIncome) * 100 : 0;
   const spendingStatus =
     spendingRate < 50 ? "Good" : spendingRate < 80 ? "Warning" : "Critical";
 
@@ -491,42 +531,6 @@ function HomePage({ auth, onLogout }) {
       </header>
 
       <main className="budget-main">
-        {activeTab !== "budgets" &&
-          activeTab !== "insights" &&
-          activeTab !== "charts" && (
-            <section className="panel-card current-balance-editor">
-              <div className="current-balance-editor-head">
-                <div>
-                  <h2>Income</h2>
-                  <p className="current-balance-editor-text">
-                    Enter an amount to add to your current Income.
-                  </p>
-                </div>
-              </div>
-              <div className="current-balance-form">
-                <div className="transaction-field">
-                  <label htmlFor="currentBalance">Current Income</label>
-                  <input
-                    id="currentBalance"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="Enter amount to add"
-                    value={balanceInput}
-                    onChange={(e) => setBalanceInput(e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="transaction-submit-btn"
-                  onClick={handleSetCurrentBalance}
-                >
-                  Add to Income
-                </button>
-              </div>
-            </section>
-          )}
-
         <div className="period-filter">
           <label htmlFor="period-select">Filter by: </label>
           <select
@@ -561,12 +565,12 @@ function HomePage({ auth, onLogout }) {
           <SummaryCard
             title="Current Income"
             amount={currency(
-              period === "all" ? currentBalance : filteredCurrentBalance,
+              period === "all" ? allTimeIncome : filteredCurrentBalance,
             )}
             subtitle={
               period === "all"
                 ? `Total income (all time)`
-                : `Income for selected period`
+                : `Income for ${period === "week" ? "this week" : period === "month" ? "this month" : "this year"}`
             }
             className="balance-card"
           />
