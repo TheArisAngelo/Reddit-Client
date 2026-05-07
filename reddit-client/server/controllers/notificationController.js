@@ -22,7 +22,7 @@ const getNotifications = async (req, res) => {
 const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-
+    const userId = req.user.userId;
     const notification = await Notification.findOneAndUpdate(
       { _id: id, userId },
       { read: true },
@@ -43,6 +43,7 @@ const markAsRead = async (req, res) => {
 // PATCH /api/notifications/read-all — mark all notifications as read
 const markAllAsRead = async (req, res) => {
   try {
+    const userId = req.user.userId;
     await Notification.updateMany({ userId, read: false }, { read: true });
 
     res.json({ message: "All notifications marked as read" });

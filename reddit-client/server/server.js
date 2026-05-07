@@ -7,9 +7,9 @@ dotenv.config();
 
 const authRoutes = require("./routes/authRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
-
 const notificationRoutes = require("./routes/notificationRoutes");
 const { startNotificationJob } = require("./jobs/notificationJob");
+require("./jobs/weeklyNotificationJob");
 
 const app = express();
 
