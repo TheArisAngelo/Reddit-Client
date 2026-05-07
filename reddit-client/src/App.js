@@ -183,7 +183,7 @@ function HomePage({ auth, onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
   const [balanceInput, setBalanceInput] = useState("");
-  const [period, setPeriod] = useState("month");
+  const [period, setPeriod] = useState("week");
   const [darkMode, setDarkMode] = useState(true);
 
   // Load data — use cache if fresh, otherwise fetch from API
