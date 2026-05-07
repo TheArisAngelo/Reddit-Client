@@ -54,7 +54,7 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
   const [filterCategory, setFilterCategory] = useState("all");
 
   // Date Period Filter
-  const [filterPeriod, setFilterPeriod] = useState("all");
+  const [filterPeriod, setFilterPeriod] = useState("week");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
