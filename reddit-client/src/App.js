@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { TrendingUp, Receipt, Banknote, ShieldCheck } from "lucide-react";
 import "./App.css";
 import Profile from "./Profile";
 import LoginPage from "./LoginPage";
@@ -22,6 +23,13 @@ const DEFAULT_DATA = {
   transactions: [],
   budgets: [],
   savingsGoals: [],
+};
+
+const CARD_CONFIG = {
+  "income-card": { icon: <TrendingUp size={17} />, iconClass: "icon-teal" },
+  "expense-card": { icon: <Receipt size={17} />, iconClass: "icon-coral" },
+  "balance-card": { icon: <Banknote size={17} />, iconClass: "icon-blue" },
+  "status-card": { icon: <ShieldCheck size={17} />, iconClass: "icon-green" },
 };
 
 function getStoredAuth() {
@@ -65,7 +73,7 @@ function clearBudgetCache() {
 }
 
 function currency(amount) {
-  return `₱${Math.round(Number(amount || 0))}`;
+  return `₱${Math.round(Number(amount || 0)).toLocaleString()}`;
 }
 
 function filterTransactions(transactions, period) {
@@ -170,11 +178,24 @@ function SideNav({ auth, onLogout }) {
 }
 
 function SummaryCard({ title, amount, subtitle, className, statusText }) {
+  const config = CARD_CONFIG[className] || {};
+  const isStatusCard = className?.includes("status-card");
+  const status = amount?.toLowerCase(); // "good" | "warning" | "critical"
+
   return (
     <div className={`summary-card ${className || ""}`}>
-      <p className="summary-title">{title}</p>
+      <div className="summary-card-top">
+        <p className="summary-title">{title}</p>
+        {config.icon && (
+          <span className={`card-icon ${config.iconClass}`} aria-hidden="true">
+            {config.icon}
+          </span>
+        )}
+      </div>
+
       <h3 className="summary-amount">{amount}</h3>
-      <p className="summary-subtitle">{statusText || subtitle}</p>
+
+      <div className="summary-meta">{statusText || subtitle}</div>
     </div>
   );
 }

@@ -2664,6 +2664,136 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   SUMMARY CARD ICONS
+========================= */
+
+.summary-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.summary-card-top .summary-title {
+  margin: 0;
+}
+
+.card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+/* Dark mode icon colors */
+.icon-teal {
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}
+.icon-coral {
+  background: rgba(251, 113, 133, 0.14);
+  color: #fb7185;
+}
+.icon-blue {
+  background: rgba(96, 165, 250, 0.14);
+  color: #60a5fa;
+}
+.icon-green {
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}
+
+/* Light mode overrides */
+.light-mode .icon-teal {
+  background: #d1fae5;
+  color: #065f46;
+}
+.light-mode .icon-coral {
+  background: #ffe4e6;
+  color: #be123c;
+}
+.light-mode .icon-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.light-mode .icon-green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Spending status badge */
+.spending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.spending-badge-good {
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}
+.spending-badge-warning {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
+}
+.spending-badge-critical {
+  background: rgba(251, 113, 133, 0.14);
+  color: #fb7185;
+}
+
+.light-mode .spending-badge-good {
+  background: #dcfce7;
+  color: #15803d;
+}
+.light-mode .spending-badge-warning {
+  background: #fef9c3;
+  color: #a16207;
+}
+.light-mode .spending-badge-critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Hover lift on all summary cards */
+.summary-card {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease;
+  cursor: default;
+}
+
+.summary-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(148, 163, 184, 0.32);
+}
+
+/* Meta footer row */
+.summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.summary-meta i {
+  font-size: 13px;
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 
