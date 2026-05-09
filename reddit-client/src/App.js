@@ -32,10 +32,41 @@ const CARD_CONFIG = {
   "status-card": { icon: <ShieldCheck size={17} />, iconClass: "icon-green" },
 };
 
+// ─── SECURITY CHANGE 1: Input Sanitizer ───────────────────────────────────────
+// Strips any HTML/script tags from user input before it's used or sent to the API.
+// This prevents XSS (Cross-Site Scripting) attacks.
+function sanitize(str) {
+  if (typeof str !== "string") return str;
+  return str.trim().replace(/<[^>]*>/g, "");
+}
+
+// ─── SECURITY CHANGE 2: Token Validation Helper ───────────────────────────────
+// Checks if a JWT token is expired before trusting it.
+// JWT tokens have 3 parts separated by dots; the middle part is the payload.
+function isTokenExpired(token) {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // payload.exp is in seconds; Date.now() is in milliseconds
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true; // if we can't read the token, treat it as expired
+  }
+}
+
 function getStoredAuth() {
-  const saved = localStorage.getItem(AUTH_STORAGE_KEY);
+  // ─── SECURITY CHANGE 3: Use sessionStorage instead of localStorage ───────────
+  // sessionStorage clears automatically when the browser tab is closed.
+  // localStorage persists forever — a risk if someone else uses the same device.
+  const saved = sessionStorage.getItem(AUTH_STORAGE_KEY);
   try {
     const parsed = saved ? JSON.parse(saved) : null;
+    // ─── SECURITY CHANGE 4: Reject expired tokens on load ─────────────────────
+    // If the stored token is expired, treat the user as logged out immediately.
+    if (parsed?.isLoggedIn && isTokenExpired(parsed.token)) {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      return { isLoggedIn: false, username: "" };
+    }
     return parsed?.isLoggedIn ? parsed : { isLoggedIn: false, username: "" };
   } catch (error) {
     return { isLoggedIn: false, username: "" };
@@ -44,11 +75,12 @@ function getStoredAuth() {
 
 function getCachedBudgetData() {
   try {
-    const item = localStorage.getItem(CACHE_KEY);
+    // ─── SECURITY CHANGE 5: Cache also moved to sessionStorage ────────────────
+    const item = sessionStorage.getItem(CACHE_KEY);
     if (!item) return null;
     const { data, timestamp } = JSON.parse(item);
     if (Date.now() - timestamp > CACHE_TTL) {
-      localStorage.removeItem(CACHE_KEY);
+      sessionStorage.removeItem(CACHE_KEY);
       return null;
     }
     return data;
@@ -59,7 +91,7 @@ function getCachedBudgetData() {
 
 function setCachedBudgetData(data) {
   try {
-    localStorage.setItem(
+    sessionStorage.setItem(
       CACHE_KEY,
       JSON.stringify({ data, timestamp: Date.now() }),
     );
@@ -69,7 +101,7 @@ function setCachedBudgetData(data) {
 }
 
 function clearBudgetCache() {
-  localStorage.removeItem(CACHE_KEY);
+  sessionStorage.removeItem(CACHE_KEY);
 }
 
 function currency(amount) {
@@ -180,7 +212,7 @@ function SideNav({ auth, onLogout }) {
 function SummaryCard({ title, amount, subtitle, className, statusText }) {
   const config = CARD_CONFIG[className] || {};
   const isStatusCard = className?.includes("status-card");
-  const status = amount?.toLowerCase(); // "good" | "warning" | "critical"
+  const status = amount?.toLowerCase();
 
   return (
     <div className={`summary-card ${className || ""}`}>
@@ -207,9 +239,26 @@ function HomePage({ auth, onLogout }) {
   const [period, setPeriod] = useState("week");
   const [darkMode, setDarkMode] = useState(true);
 
-  // Load data — use cache if fresh, otherwise fetch from API
+  // ─── SECURITY CHANGE 6: Auto-logout when token expires ──────────────────────
+  // Checks every minute if the token has expired and logs out automatically.
+  // Without this, an expired token stays in storage and could cause silent failures.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (auth?.token && isTokenExpired(auth.token)) {
+        onLogout();
+      }
+    }, 60 * 1000); // check every 60 seconds
+    return () => clearInterval(interval);
+  }, [auth?.token, onLogout]);
+
   useEffect(() => {
     if (auth?.token) {
+      // ─── SECURITY CHANGE 7: Don't load data if token is already expired ──────
+      if (isTokenExpired(auth.token)) {
+        onLogout();
+        return;
+      }
+
       const cached = getCachedBudgetData();
       if (cached) {
         setBudgetData(cached);
@@ -219,8 +268,17 @@ function HomePage({ auth, onLogout }) {
       fetch(API, {
         headers: { Authorization: `Bearer ${auth.token}` },
       })
-        .then((r) => r.json())
+        .then((r) => {
+          // ─── SECURITY CHANGE 8: Handle 401 Unauthorized globally ─────────────
+          // If the server says our token is invalid/expired, log out immediately.
+          if (r.status === 401) {
+            onLogout();
+            return null;
+          }
+          return r.json();
+        })
         .then((data) => {
+          if (!data) return;
           if (data && typeof data === "object") {
             setBudgetData({
               currentBalance: data.currentBalance ?? 0,
@@ -256,6 +314,11 @@ function HomePage({ auth, onLogout }) {
         },
         body: JSON.stringify(deposit),
       });
+      // ─── SECURITY CHANGE 9: Handle 401 on all mutations ─────────────────────
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const updated = await res.json();
       if (updated && Array.isArray(updated.budgets)) {
         setBudgetData(updated);
@@ -267,16 +330,28 @@ function HomePage({ auth, onLogout }) {
   };
 
   const handleAddTransaction = async (newTransaction) => {
+    // ─── SECURITY CHANGE 10: Sanitize data before sending to the API ────────────
+    // Cleans any potential HTML/script tags from text fields the user typed.
+    const safeTransaction = {
+      ...newTransaction,
+      category: sanitize(newTransaction.category),
+      description: sanitize(newTransaction.description || ""),
+    };
+
     try {
-      clearBudgetCache(); // bust cache before mutation
+      clearBudgetCache();
       const res = await fetch(`${API}/transactions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify(newTransaction),
+        body: JSON.stringify(safeTransaction),
       });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const updated = await res.json();
       if (updated && Array.isArray(updated.transactions)) {
         setBudgetData(updated);
@@ -295,16 +370,27 @@ function HomePage({ auth, onLogout }) {
   };
 
   const handleAddBudget = async (newBudget) => {
+    // ─── Sanitize budget name before sending ────────────────────────────────────
+    const safeBudget = {
+      ...newBudget,
+      name: sanitize(newBudget.name || ""),
+      category: sanitize(newBudget.category || ""),
+    };
+
     try {
-      clearBudgetCache(); // bust cache before mutation
+      clearBudgetCache();
       const res = await fetch(`${API}/budgets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify(newBudget),
+        body: JSON.stringify(safeBudget),
       });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const updated = await res.json();
       setBudgetData(updated);
       setCachedBudgetData(updated);
@@ -332,9 +418,12 @@ function HomePage({ auth, onLogout }) {
         },
         body: JSON.stringify({ addBalance: parsedBalance }),
       });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const updated = await res.json();
 
-      // Merge instead of replace
       setBudgetData((prev) => ({
         ...prev,
         currentBalance: updated.currentBalance ?? prev.currentBalance,
@@ -381,7 +470,6 @@ function HomePage({ auth, onLogout }) {
     (item) => item.type === "expense",
   ).length;
 
-  // Derive the balance dynamically from all transactions
   const totalAllTimeIncome = transactions
     .filter((item) => item.type === "income")
     .reduce((sum, item) => sum + item.amount, 0);
@@ -663,14 +751,16 @@ export default function App() {
   const [auth, setAuth] = useState(getStoredAuth());
 
   const handleLogin = (authData) => {
-    clearBudgetCache(); // clear stale cache from previous session
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+    clearBudgetCache();
+    // ─── SECURITY CHANGE 11: Save to sessionStorage instead of localStorage ─────
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
     setAuth(authData);
   };
 
   const handleLogout = () => {
-    clearBudgetCache(); // clear cache on logout
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    clearBudgetCache();
+    // ─── SECURITY CHANGE 12: Clear sessionStorage on logout ──────────────────────
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
     setAuth({ isLoggedIn: false, username: "", token: "" });
   };
 
