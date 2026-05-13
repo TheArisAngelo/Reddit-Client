@@ -136,9 +136,11 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
           const [year, month, day] = t.date.split("-").map(Number);
           const txDate = new Date(year, month - 1, day);
           if (filterPeriod === "week") {
-            const weekAgo = new Date(today);
-            weekAgo.setDate(today.getDate() - 7);
-            matchDate = txDate >= weekAgo && txDate <= today;
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            matchDate = txDate >= startOfWeek && txDate <= endOfWeek;
           } else if (filterPeriod === "month") {
             matchDate =
               txDate.getMonth() === today.getMonth() &&
