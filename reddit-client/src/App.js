@@ -117,9 +117,11 @@ function filterTransactions(transactions, period) {
     const date = new Date(year, month - 1, day);
 
     if (period === "week") {
-      const weekAgo = new Date(today);
-      weekAgo.setDate(today.getDate() - 7);
-      return date >= weekAgo && date <= today;
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay()); 
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); 
+      return date >= startOfWeek && date <= endOfWeek;
     } else if (period === "month") {
       return (
         date.getMonth() === today.getMonth() &&
