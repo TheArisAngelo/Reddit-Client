@@ -12,11 +12,13 @@ import ChartsTab from "./ChartsTab";
 import TransactionsTab from "./TransactionsTab";
 import SavingsTab from "./SavingsTab";
 import NotificationBell from "./NotificationBell";
+import WhatIfSimulator from "./WhatIfSimulator";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 const CACHE_KEY = "budget-data-cache";
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 const DEFAULT_DATA = {
   currentBalance: 0,
@@ -51,6 +53,9 @@ function isTokenExpired(token) {
     return payload.exp * 1000 < Date.now();
   } catch {
     return true; // if we can't read the token, treat it as expired
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
   }
 }
 
@@ -63,6 +68,9 @@ function getStoredAuth() {
     const parsed = saved ? JSON.parse(saved) : null;
     // ─── SECURITY CHANGE 4: Reject expired tokens on load ─────────────────────
     // If the stored token is expired, treat the user as logged out immediately.
+  const saved = sessionStorage.getItem(AUTH_STORAGE_KEY);
+  try {
+    const parsed = saved ? JSON.parse(saved) : null;
     if (parsed?.isLoggedIn && isTokenExpired(parsed.token)) {
       sessionStorage.removeItem(AUTH_STORAGE_KEY);
       return { isLoggedIn: false, username: "" };
@@ -98,6 +106,7 @@ function setCachedBudgetData(data) {
   } catch {
     // storage full or unavailable, skip caching
   }
+  } catch {}
 }
 
 function clearBudgetCache() {
@@ -121,6 +130,9 @@ function filterTransactions(transactions, period) {
       startOfWeek.setDate(today.getDate() - today.getDay()); 
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6); 
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
       return date >= startOfWeek && date <= endOfWeek;
     } else if (period === "month") {
       return (
@@ -142,6 +154,8 @@ function ProtectedRoute({ isLoggedIn, children }) {
 }
 
 function SideNav({ auth, onLogout }) {
+// ─── SideNav now accepts transactions to pass via route state ─────────────────
+function SideNav({ auth, onLogout, transactions }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -189,6 +203,15 @@ function SideNav({ auth, onLogout }) {
                 >
                   Profile
                 </Link>
+                {/* Pass transactions via route state so simulator can read them */}
+                <Link
+                  to="/simulator"
+                  state={{ transactions }}
+                  className="side-nav-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  💡 What-if Simulator
+                </Link>
                 <button
                   className="side-nav-link side-nav-logout"
                   onClick={() => {
@@ -229,6 +252,7 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
 
       <h3 className="summary-amount">{amount}</h3>
 
+      <h3 className="summary-amount">{amount}</h3>
       <div className="summary-meta">{statusText || subtitle}</div>
     </div>
   );
@@ -250,6 +274,7 @@ function HomePage({ auth, onLogout }) {
         onLogout();
       }
     }, 60 * 1000); // check every 60 seconds
+    }, 60 * 1000);
     return () => clearInterval(interval);
   }, [auth?.token, onLogout]);
 
@@ -519,6 +544,7 @@ function HomePage({ auth, onLogout }) {
     return (
       <div className="app-shell budget-app">
         <SideNav auth={auth} onLogout={onLogout} />
+        <SideNav auth={auth} onLogout={onLogout} transactions={[]} />
         <main className="budget-main">
           <section className="guest-home">
             <div className="guest-hero-card">
@@ -568,6 +594,8 @@ function HomePage({ auth, onLogout }) {
   return (
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
       <SideNav auth={auth} onLogout={onLogout} />
+      {/* Pass transactions so the sidebar link can carry them to /simulator */}
+      <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
 
       <header className="budget-header">
         <h1>SpendWise</h1>
@@ -787,6 +815,8 @@ export default function App() {
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* Simulator is its own dedicated page */}
+      <Route path="/simulator" element={<WhatIfSimulator />} />
     </Routes>
   );
 }

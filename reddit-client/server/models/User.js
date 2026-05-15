@@ -11,11 +11,28 @@ const userSchema = new mongoose.Schema(
     mobileNumber: {
       type: String,
       required: true,
+    email: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    firebaseUid: {
+      type: String,
+      default: "",
+    },
+    password: {
+      type: String,
+      default: "", 
+    },
+    mobileNumber: {
+      type: String,
+      default: "", 
       trim: true,
     },
     country: {
       type: String,
       required: true,
+      default: "", 
       trim: true,
     },
     place: {
@@ -26,6 +43,12 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      default: "", 
+      trim: true,
+    },
+    avatar: {
+      type: String,
+      default: "",
     },
     currentBalance: {
       type: Number,

@@ -1,3 +1,11 @@
 
 #Node Modules
 /node_modules
+/node_modules
+ 
+# Service Account Key
+server/utils/serviceAccountKey.json
+
+# Environment Variables
+.env
+server/.env
