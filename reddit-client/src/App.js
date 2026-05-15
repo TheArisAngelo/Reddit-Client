@@ -12,11 +12,12 @@ import ChartsTab from "./ChartsTab";
 import TransactionsTab from "./TransactionsTab";
 import SavingsTab from "./SavingsTab";
 import NotificationBell from "./NotificationBell";
+import WhatIfSimulator from "./WhatIfSimulator";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 const CACHE_KEY = "budget-data-cache";
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 const DEFAULT_DATA = {
   currentBalance: 0,
@@ -32,37 +33,25 @@ const CARD_CONFIG = {
   "status-card": { icon: <ShieldCheck size={17} />, iconClass: "icon-green" },
 };
 
-// ─── SECURITY CHANGE 1: Input Sanitizer ───────────────────────────────────────
-// Strips any HTML/script tags from user input before it's used or sent to the API.
-// This prevents XSS (Cross-Site Scripting) attacks.
 function sanitize(str) {
   if (typeof str !== "string") return str;
   return str.trim().replace(/<[^>]*>/g, "");
 }
 
-// ─── SECURITY CHANGE 2: Token Validation Helper ───────────────────────────────
-// Checks if a JWT token is expired before trusting it.
-// JWT tokens have 3 parts separated by dots; the middle part is the payload.
 function isTokenExpired(token) {
   if (!token) return true;
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    // payload.exp is in seconds; Date.now() is in milliseconds
     return payload.exp * 1000 < Date.now();
   } catch {
-    return true; // if we can't read the token, treat it as expired
+    return true;
   }
 }
 
 function getStoredAuth() {
-  // ─── SECURITY CHANGE 3: Use sessionStorage instead of localStorage ───────────
-  // sessionStorage clears automatically when the browser tab is closed.
-  // localStorage persists forever — a risk if someone else uses the same device.
   const saved = sessionStorage.getItem(AUTH_STORAGE_KEY);
   try {
     const parsed = saved ? JSON.parse(saved) : null;
-    // ─── SECURITY CHANGE 4: Reject expired tokens on load ─────────────────────
-    // If the stored token is expired, treat the user as logged out immediately.
     if (parsed?.isLoggedIn && isTokenExpired(parsed.token)) {
       sessionStorage.removeItem(AUTH_STORAGE_KEY);
       return { isLoggedIn: false, username: "" };
@@ -75,7 +64,6 @@ function getStoredAuth() {
 
 function getCachedBudgetData() {
   try {
-    // ─── SECURITY CHANGE 5: Cache also moved to sessionStorage ────────────────
     const item = sessionStorage.getItem(CACHE_KEY);
     if (!item) return null;
     const { data, timestamp } = JSON.parse(item);
@@ -95,9 +83,7 @@ function setCachedBudgetData(data) {
       CACHE_KEY,
       JSON.stringify({ data, timestamp: Date.now() }),
     );
-  } catch {
-    // storage full or unavailable, skip caching
-  }
+  } catch {}
 }
 
 function clearBudgetCache() {
@@ -118,9 +104,9 @@ function filterTransactions(transactions, period) {
 
     if (period === "week") {
       const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay()); 
+      startOfWeek.setDate(today.getDate() - today.getDay());
       const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6); 
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
       return date >= startOfWeek && date <= endOfWeek;
     } else if (period === "month") {
       return (
@@ -141,7 +127,8 @@ function ProtectedRoute({ isLoggedIn, children }) {
   return children;
 }
 
-function SideNav({ auth, onLogout }) {
+// ─── SideNav now accepts transactions to pass via route state ─────────────────
+function SideNav({ auth, onLogout, transactions }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -189,6 +176,15 @@ function SideNav({ auth, onLogout }) {
                 >
                   Profile
                 </Link>
+                {/* Pass transactions via route state so simulator can read them */}
+                <Link
+                  to="/simulator"
+                  state={{ transactions }}
+                  className="side-nav-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  💡 What-if Simulator
+                </Link>
                 <button
                   className="side-nav-link side-nav-logout"
                   onClick={() => {
@@ -213,8 +209,6 @@ function SideNav({ auth, onLogout }) {
 
 function SummaryCard({ title, amount, subtitle, className, statusText }) {
   const config = CARD_CONFIG[className] || {};
-  const isStatusCard = className?.includes("status-card");
-  const status = amount?.toLowerCase();
 
   return (
     <div className={`summary-card ${className || ""}`}>
@@ -226,9 +220,7 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
           </span>
         )}
       </div>
-
       <h3 className="summary-amount">{amount}</h3>
-
       <div className="summary-meta">{statusText || subtitle}</div>
     </div>
   );
@@ -241,21 +233,17 @@ function HomePage({ auth, onLogout }) {
   const [period, setPeriod] = useState("week");
   const [darkMode, setDarkMode] = useState(true);
 
-  // ─── SECURITY CHANGE 6: Auto-logout when token expires ──────────────────────
-  // Checks every minute if the token has expired and logs out automatically.
-  // Without this, an expired token stays in storage and could cause silent failures.
   useEffect(() => {
     const interval = setInterval(() => {
       if (auth?.token && isTokenExpired(auth.token)) {
         onLogout();
       }
-    }, 60 * 1000); // check every 60 seconds
+    }, 60 * 1000);
     return () => clearInterval(interval);
   }, [auth?.token, onLogout]);
 
   useEffect(() => {
     if (auth?.token) {
-      // ─── SECURITY CHANGE 7: Don't load data if token is already expired ──────
       if (isTokenExpired(auth.token)) {
         onLogout();
         return;
@@ -271,8 +259,6 @@ function HomePage({ auth, onLogout }) {
         headers: { Authorization: `Bearer ${auth.token}` },
       })
         .then((r) => {
-          // ─── SECURITY CHANGE 8: Handle 401 Unauthorized globally ─────────────
-          // If the server says our token is invalid/expired, log out immediately.
           if (r.status === 401) {
             onLogout();
             return null;
@@ -316,7 +302,6 @@ function HomePage({ auth, onLogout }) {
         },
         body: JSON.stringify(deposit),
       });
-      // ─── SECURITY CHANGE 9: Handle 401 on all mutations ─────────────────────
       if (res.status === 401) {
         onLogout();
         return;
@@ -332,14 +317,11 @@ function HomePage({ auth, onLogout }) {
   };
 
   const handleAddTransaction = async (newTransaction) => {
-    // ─── SECURITY CHANGE 10: Sanitize data before sending to the API ────────────
-    // Cleans any potential HTML/script tags from text fields the user typed.
     const safeTransaction = {
       ...newTransaction,
       category: sanitize(newTransaction.category),
       description: sanitize(newTransaction.description || ""),
     };
-
     try {
       clearBudgetCache();
       const res = await fetch(`${API}/transactions`, {
@@ -372,13 +354,11 @@ function HomePage({ auth, onLogout }) {
   };
 
   const handleAddBudget = async (newBudget) => {
-    // ─── Sanitize budget name before sending ────────────────────────────────────
     const safeBudget = {
       ...newBudget,
       name: sanitize(newBudget.name || ""),
       category: sanitize(newBudget.category || ""),
     };
-
     try {
       clearBudgetCache();
       const res = await fetch(`${API}/budgets`, {
@@ -425,7 +405,6 @@ function HomePage({ auth, onLogout }) {
         return;
       }
       const updated = await res.json();
-
       setBudgetData((prev) => ({
         ...prev,
         currentBalance: updated.currentBalance ?? prev.currentBalance,
@@ -467,18 +446,9 @@ function HomePage({ auth, onLogout }) {
       .reduce((sum, item) => sum + item.amount, 0);
   }, [filteredTransactions]);
 
-  const balance = currentBalance;
   const expenseCount = filteredTransactions.filter(
     (item) => item.type === "expense",
   ).length;
-
-  const totalAllTimeIncome = transactions
-    .filter((item) => item.type === "income")
-    .reduce((sum, item) => sum + item.amount, 0);
-
-  const totalAllTimeExpenses = transactions
-    .filter((item) => item.type === "expense")
-    .reduce((sum, item) => sum + item.amount, 0);
 
   const filteredCurrentBalance =
     filteredTransactions
@@ -494,7 +464,6 @@ function HomePage({ auth, onLogout }) {
 
   const dynamicIncome =
     period === "all" ? allTimeIncome : filteredCurrentBalance;
-
   const spendingRate =
     dynamicIncome > 0 ? (totalExpenses / dynamicIncome) * 100 : 0;
   const spendingStatus =
@@ -518,7 +487,7 @@ function HomePage({ auth, onLogout }) {
   if (!auth.isLoggedIn) {
     return (
       <div className="app-shell budget-app">
-        <SideNav auth={auth} onLogout={onLogout} />
+        <SideNav auth={auth} onLogout={onLogout} transactions={[]} />
         <main className="budget-main">
           <section className="guest-home">
             <div className="guest-hero-card">
@@ -567,7 +536,8 @@ function HomePage({ auth, onLogout }) {
 
   return (
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
-      <SideNav auth={auth} onLogout={onLogout} />
+      {/* Pass transactions so the sidebar link can carry them to /simulator */}
+      <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
 
       <header className="budget-header">
         <h1>SpendWise</h1>
@@ -700,7 +670,6 @@ function HomePage({ auth, onLogout }) {
             onAddTransaction={handleAddTransaction}
           />
         )}
-
         {activeTab === "budgets" && (
           <BudgetsTab
             budgets={budgets}
@@ -709,7 +678,6 @@ function HomePage({ auth, onLogout }) {
             onAddDeposit={handleAddDeposit}
           />
         )}
-
         {activeTab === "dashboard" && (
           <InsightsTab
             transactions={filteredTransactions}
@@ -719,7 +687,6 @@ function HomePage({ auth, onLogout }) {
             period={period}
           />
         )}
-
         {activeTab === "savings" && (
           <SavingsTab
             savingsGoals={savingsGoals}
@@ -727,7 +694,6 @@ function HomePage({ auth, onLogout }) {
             onGoalsUpdate={handleGoalsUpdate}
           />
         )}
-
         {activeTab === "insights" && (
           <InsightsTab
             transactions={filteredTransactions}
@@ -737,7 +703,6 @@ function HomePage({ auth, onLogout }) {
             period={period}
           />
         )}
-
         {activeTab === "charts" && (
           <ChartsTab
             transactions={transactions}
@@ -754,14 +719,12 @@ export default function App() {
 
   const handleLogin = (authData) => {
     clearBudgetCache();
-    // ─── SECURITY CHANGE 11: Save to sessionStorage instead of localStorage ─────
     sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
     setAuth(authData);
   };
 
   const handleLogout = () => {
     clearBudgetCache();
-    // ─── SECURITY CHANGE 12: Clear sessionStorage on logout ──────────────────────
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     setAuth({ isLoggedIn: false, username: "", token: "" });
   };
@@ -787,6 +750,8 @@ export default function App() {
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* Simulator is its own dedicated page */}
+      <Route path="/simulator" element={<WhatIfSimulator />} />
     </Routes>
   );
 }
