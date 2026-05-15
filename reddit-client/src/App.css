@@ -3098,6 +3098,57 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   Firebase
+========================= */
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #2a2a3d);
+  background: var(--card-bg, #1a1a2e);
+  color: var(--text, #fff);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin: 4px;
+}
+
+.google-signin-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #7c3aed;
+}
+
+.google-signin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Divider
+========================= */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  color: var(--text-muted, #888);
+  font-size: 12px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border, #2a2a3d);
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 

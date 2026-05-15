@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./App.css";
 import { FaLock, FaLockOpen } from "react-icons/fa";
+import { auth, googleProvider } from "./firebase";
+import { signInWithPopup } from "firebase/auth";
 
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 
@@ -14,19 +16,16 @@ export default function LoginPage({ onLogin }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
-
+    setFormData((current) => ({ ...current, [name]: value }));
     if (error) setError("");
   };
 
+  // ─── Existing email/password login (unchanged) ────────────────────────────
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -37,7 +36,6 @@ export default function LoginPage({ onLogin }) {
       setError("Please enter your username.");
       return;
     }
-
     if (!password) {
       setError("Please enter your password.");
       return;
@@ -48,10 +46,7 @@ export default function LoginPage({ onLogin }) {
 
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
-        {
-          username,
-          password,
-        },
+        { username, password },
       );
 
       const authData = {
@@ -70,15 +65,56 @@ export default function LoginPage({ onLogin }) {
       localStorage.setItem("budget-tracker-auth", JSON.stringify(authData));
       localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
 
-      if (onLogin) {
-        onLogin(authData);
-      }
-
+      if (onLogin) onLogin(authData);
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ─── NEW: Google Sign-in ──────────────────────────────────────────────────
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+      setError("");
+
+      // Step 1: Sign in with Google popup
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // Step 2: Get Firebase token from Google result
+      const firebaseToken = await result.user.getIdToken();
+
+      // Step 3: Send Firebase token to your backend to verify
+      // and get back your app's own token + user data
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/google",
+        { firebaseToken },
+      );
+
+      const authData = {
+        isLoggedIn: true,
+        username: response.data.user.username,
+        token: response.data.token,
+      };
+
+      const userData = {
+        username: response.data.user.username,
+        mobileNumber: response.data.user.mobileNumber || "",
+        country: response.data.user.country || "",
+        place: response.data.user.place || "",
+      };
+
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+      localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
+
+      if (onLogin) onLogin(authData);
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.message || "Google sign-in failed.");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -93,7 +129,6 @@ export default function LoginPage({ onLogin }) {
           <p className="eyebrow">LOGIN</p>
           <h1 className="create-page-title">Access your account</h1>
         </div>
-
         <div className="create-top-actions">
           <Link to="/" className="nav-btn">
             Home
@@ -104,6 +139,33 @@ export default function LoginPage({ onLogin }) {
       <main className="login-layout">
         <section className="create-card login-card">
           <div className="lane-chip">Sign In</div>
+
+          {/* ─── Google Sign-in Button ─────────────────────────────────── */}
+          <button
+            type="button"
+            className="google-signin-btn"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              "Signing in..."
+            ) : (
+              <>
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                />
+                Continue with Google
+              </>
+            )}
+          </button>
+
+          {/* ─── Divider ───────────────────────────────────────────────── */}
+          <div className="login-divider">
+            <span>or sign in with username</span>
+          </div>
 
           <form className="create-form" onSubmit={handleSubmit}>
             <label className="create-field">

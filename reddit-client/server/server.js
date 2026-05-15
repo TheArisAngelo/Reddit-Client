@@ -4,7 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
-
+require("./utils/firebaseAdmin");
 const authRoutes = require("./routes/authRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
