@@ -4,3 +4,7 @@
  
 # Service Account Key
 server/utils/serviceAccountKey.json
+
+# Environment Variables
+.env
+server/.env
