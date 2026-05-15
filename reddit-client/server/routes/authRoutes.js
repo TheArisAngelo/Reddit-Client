@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const BudgetData = require("../models/BudgetData");
 const authMiddleware = require("../middleware/authMiddleware");
+const admin = require("../utils/firebaseAdmin");
 
 const router = express.Router();
 
@@ -124,6 +125,87 @@ router.post("/reset-password", async (req, res) => {
     res.json({ message: "Password reset successful." });
   } catch (error) {
     res.status(500).json({ message: "Server error." });
+  }
+});
+
+// ─── NEW: Google Sign-in Route ────────────────────────────────────────────────
+// Frontend sends Firebase token → we verify it → return our own JWT
+router.post("/google", async (req, res) => {
+  const { firebaseToken } = req.body;
+
+  if (!firebaseToken) {
+    return res.status(400).json({ message: "No Firebase token provided" });
+  }
+
+  try {
+    // Step 1: Verify the Firebase token is legitimate
+    const decoded = await admin.auth().verifyIdToken(firebaseToken);
+    const { uid, email, name, picture } = decoded;
+
+    // Step 2: Find existing user by firebaseUid or email
+    let user = await User.findOne({ firebaseUid: uid });
+
+    if (!user) {
+      // Check if user signed up normally with same email before
+      user = await User.findOne({ email });
+
+      if (user) {
+        // Link existing account to Google
+        user.firebaseUid = uid;
+        await user.save();
+      } else {
+        // Brand new Google user — create account in MongoDB
+        const username = name || email.split("@")[0];
+
+        // Make sure username is unique
+        const existingUsername = await User.findOne({ username });
+        const finalUsername = existingUsername
+          ? `${username}_${uid.slice(0, 5)}`
+          : username;
+
+        user = await User.create({
+          firebaseUid: uid,
+          username: finalUsername,
+          email,
+          avatar: picture || "",
+          password: "", // No password for Google users
+          mobileNumber: "",
+          country: "",
+          place: "",
+        });
+
+        // Create empty budget data for new user
+        await BudgetData.create({
+          userId: user._id,
+          currentBalance: 0,
+          transactions: [],
+          budgets: [],
+          savingsGoals: [],
+        });
+      }
+    }
+
+    // Step 3: Issue your own JWT so the rest of your app works as normal
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    res.json({
+      message: "Google login successful",
+      token,
+      user: {
+        username: user.username,
+        email: user.email || "",
+        mobileNumber: user.mobileNumber || "",
+        country: user.country || "",
+        place: user.place || "",
+      },
+    });
+  } catch (err) {
+    console.error("Google auth error:", err);
+    res.status(401).json({ message: "Invalid Firebase token" });
   }
 });
 
