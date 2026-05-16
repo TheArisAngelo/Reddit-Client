@@ -21,20 +21,10 @@ export default function LoginPage({ onLogin }) {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
-
-    if (error) setError("");
-  };
-
     setFormData((current) => ({ ...current, [name]: value }));
     if (error) setError("");
   };
 
-  // ─── Existing email/password login (unchanged) ────────────────────────────
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -56,10 +46,6 @@ export default function LoginPage({ onLogin }) {
 
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
-        {
-          username,
-          password,
-        },
         { username, password },
       );
 
@@ -76,12 +62,8 @@ export default function LoginPage({ onLogin }) {
         place: response.data.user.place,
       };
 
-      localStorage.setItem("budget-tracker-auth", JSON.stringify(authData));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
       localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
-
-      if (onLogin) {
-        onLogin(authData);
-      }
 
       if (onLogin) onLogin(authData);
       navigate("/");
@@ -92,20 +74,14 @@ export default function LoginPage({ onLogin }) {
     }
   };
 
-  // ─── NEW: Google Sign-in ──────────────────────────────────────────────────
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
       setError("");
 
-      // Step 1: Sign in with Google popup
       const result = await signInWithPopup(auth, googleProvider);
-
-      // Step 2: Get Firebase token from Google result
       const firebaseToken = await result.user.getIdToken();
 
-      // Step 3: Send Firebase token to your backend to verify
-      // and get back your app's own token + user data
       const response = await axios.post(
         "http://localhost:5000/api/auth/google",
         { firebaseToken },
@@ -124,7 +100,7 @@ export default function LoginPage({ onLogin }) {
         place: response.data.user.place || "",
       };
 
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
       localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
 
       if (onLogin) onLogin(authData);
@@ -159,7 +135,6 @@ export default function LoginPage({ onLogin }) {
         <section className="create-card login-card">
           <div className="lane-chip">Sign In</div>
 
-          {/* ─── Google Sign-in Button ─────────────────────────────────── */}
           <button
             type="button"
             className="google-signin-btn"
@@ -181,7 +156,6 @@ export default function LoginPage({ onLogin }) {
             )}
           </button>
 
-          {/* ─── Divider ───────────────────────────────────────────────── */}
           <div className="login-divider">
             <span>or sign in with username</span>
           </div>
