@@ -8,9 +8,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    mobileNumber: {
-      type: String,
-      required: true,
     email: {
       type: String,
       trim: true,
@@ -22,29 +19,23 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      default: "", 
+      default: "",
+      trim: true,
     },
     mobileNumber: {
       type: String,
-      default: "", 
+      default: "",
       trim: true,
     },
     country: {
       type: String,
-      required: true,
-      default: "", 
+      default: "",
       trim: true,
     },
     place: {
       type: String,
-      required: true,
       trim: true,
-    },
-    password: {
-      type: String,
-      required: true,
-      default: "", 
-      trim: true,
+      default: "",
     },
     avatar: {
       type: String,
