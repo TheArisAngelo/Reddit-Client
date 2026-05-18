@@ -47,6 +47,18 @@ const savingsGoalSchema = new mongoose.Schema(
   { _id: true },
 );
 
+const subscriptionSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    amount: { type: Number, required: true },
+    billingCycle: { type: String, default: "monthly" },
+    renewalDate: { type: String, required: true },
+    category: { type: String, default: "General" },
+    isActive: { type: Boolean, default: true },
+  },
+  { _id: true },
+);
+
 const budgetDataSchema = new mongoose.Schema(
   {
     userId: {
@@ -69,6 +81,10 @@ const budgetDataSchema = new mongoose.Schema(
     },
     savingsGoals: {
       type: [savingsGoalSchema],
+      default: [],
+    },
+    subscriptions: {
+      type: [subscriptionSchema],
       default: [],
     },
   },

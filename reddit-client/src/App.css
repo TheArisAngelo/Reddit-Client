@@ -3149,6 +3149,237 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   Subscription Watcher
+========================= */
+.subs-page {
+  min-height: 100vh;
+  color: var(--text);
+}
+
+.subs-topbar {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.subs-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.subs-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.subs-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--text);
+}
+
+.subs-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.subs-add-btn {
+  white-space: nowrap;
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+.subs-summary {
+  margin-bottom: 1.5rem;
+}
+
+.subs-cost {
+  color: var(--danger);
+}
+
+.subs-soon {
+  color: var(--warning);
+}
+
+.subs-form {
+  margin-bottom: 1.5rem;
+}
+
+.subs-form-title {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subs-field-full {
+  grid-column: 1 / -1;
+}
+
+.subs-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.subs-section-title--warning {
+  color: var(--warning);
+}
+
+.subs-upcoming {
+  margin-bottom: 1.5rem;
+}
+
+.subs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.subs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.42);
+  flex-wrap: wrap;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.subs-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124, 58, 237, 0.26);
+}
+
+.subs-row-alert {
+  border-left-width: 4px;
+}
+
+.renewal-overdue-border {
+  border-left-color: var(--danger);
+}
+.renewal-today-border {
+  border-left-color: var(--warning);
+}
+.renewal-soon-border {
+  border-left-color: var(--warning);
+}
+.renewal-ok-border {
+  border-left-color: var(--success);
+}
+
+.subs-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subs-row-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subs-row-category {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.subs-row-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.subs-row-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.subs-row-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--success);
+}
+
+.subs-renewal-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.renewal-overdue {
+  color: var(--danger);
+}
+.renewal-today {
+  color: var(--warning);
+}
+.renewal-soon {
+  color: var(--warning);
+}
+.renewal-ok {
+  color: var(--success);
+}
+
+/* Remove button — reuses budget-history-btn */
+.subs-remove-btn {
+  border-color: rgba(251, 113, 133, 0.3);
+  color: var(--danger);
+}
+
+.subs-remove-btn:hover {
+  background: rgba(251, 113, 133, 0.1);
+  color: var(--danger);
+  border-color: rgba(251, 113, 133, 0.5);
+}
+
+/* Light mode */
+.light-mode .subs-topbar {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.light-mode .subs-row {
+  background: rgba(226, 232, 240, 0.5);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+@media (max-width: 640px) {
+  .subs-header {
+    flex-direction: column;
+  }
+
+  .subs-add-btn {
+    width: 100%;
+  }
+
+  .subs-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .subs-row-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 

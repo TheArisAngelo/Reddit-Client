@@ -228,4 +228,64 @@ router.delete("/savings/:goalId", authMiddleware, async (req, res) => {
   }
 });
 
+// - Subscription Routes
+
+// GET /api/budget/subscriptions
+router.get("/subscriptions", authMiddleware, async (req, res) => {
+  try {
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+    if (!budgetData) return res.status(404).json({ message: "Not found" });
+    res.json({ subscriptions: budgetData.subscriptions });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/budget/subscriptions
+router.post("/subscriptions", authMiddleware, async (req, res) => {
+  try {
+    const { name, amount, billingCycle, renewalDate, category } = req.body;
+    if (!name || !amount || !renewalDate)
+      return res
+        .status(400)
+        .json({ message: "Name, amount, and renewal date are required" });
+
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+    if (!budgetData) return res.status(404).json({ message: "Not found" });
+
+    budgetData.subscriptions.unshift({
+      name,
+      amount: Number(amount),
+      billingCycle,
+      renewalDate,
+      category,
+    });
+
+    await budgetData.save();
+    cache.del(CACHE_KEY);
+    res.json({ subscriptions: budgetData.subscriptions });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// Delete /api/budget/subscriptions/:id
+router.delete("/subscriptions/:id", authMiddleware, async (req, res) => {
+  try {
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+    if (!budgetData) return res.status(404).json({ message: "Not found" });
+
+    const sub = budgetData.subscriptions.id(req.params.id);
+    if (!sub)
+      return (res, status(404).json({ message: "Subscription not found" }));
+
+    sub.deleteOne();
+    await budgetData.save();
+    cache.del(CACHE_KEY);
+    res.json({ subscriptions: budgetData.subscriptions });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

@@ -13,6 +13,7 @@ import TransactionsTab from "./TransactionsTab";
 import SavingsTab from "./SavingsTab";
 import NotificationBell from "./NotificationBell";
 import WhatIfSimulator from "./WhatIfSimulator";
+import SubscriptionsTab from "./SubscriptionsTab";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
@@ -186,6 +187,13 @@ function SideNav({ auth, onLogout, transactions }) {
                   onClick={() => setIsOpen(false)}
                 >
                   💡 What-if Simulator
+                </Link>
+                <Link
+                  to="/subscriptions"
+                  className="side-nav-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  📋 Subscription Watcher
                 </Link>
                 <button
                   className="side-nav-link side-nav-logout"
@@ -767,6 +775,14 @@ export default function App() {
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/simulator" element={<WhatIfSimulator />} />
+      <Route
+        path="/subscriptions"
+        element={
+          <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
+            <SubscriptionsTab token={auth.token} />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
