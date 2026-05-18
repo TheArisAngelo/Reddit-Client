@@ -11,6 +11,9 @@ const budgetRoutes = require("./routes/budgetRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const { startNotificationJob } = require("./jobs/notificationJob");
 require("./jobs/weeklyNotificationJob");
+const {
+  startSubscriptionReminderJob,
+} = require("./jobs/subscriptionReminderJob");
 
 const app = express();
 
@@ -26,6 +29,7 @@ mongoose
   .then(() => {
     console.log("MongoDB connected");
     startNotificationJob();
+    startSubscriptionReminderJob();
     app.listen(process.env.PORT || 5000, () => {
       console.log(`Server running on port ${process.env.PORT || 5000}`);
     });
