@@ -14,6 +14,7 @@ import SavingsTab from "./SavingsTab";
 import NotificationBell from "./NotificationBell";
 import WhatIfSimulator from "./WhatIfSimulator";
 import SubscriptionsTab from "./SubscriptionsTab";
+import AppHeader from "./AppHeader";
 
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
@@ -558,77 +559,13 @@ function HomePage({ auth, onLogout }) {
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
       <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
 
-      <header className="budget-header">
-        <h1>SpendWise</h1>
-        <div className="tab-nav">
-          <button
-            className={activeTab === "dashboard" ? "active" : ""}
-            onClick={() => setActiveTab("dashboard")}
-          >
-            Dashboard
-          </button>
-          <button
-            className={activeTab === "transactions" ? "active" : ""}
-            onClick={() => setActiveTab("transactions")}
-          >
-            Transactions
-          </button>
-          <button
-            className={activeTab === "budgets" ? "active" : ""}
-            onClick={() => setActiveTab("budgets")}
-          >
-            Budgets
-          </button>
-          <button
-            className={activeTab === "savings" ? "active" : ""}
-            onClick={() => setActiveTab("savings")}
-          >
-            Savings
-          </button>
-          <button
-            className={activeTab === "insights" ? "active" : ""}
-            onClick={() => setActiveTab("insights")}
-          >
-            Insights
-          </button>
-          <button
-            className={activeTab === "charts" ? "active" : ""}
-            onClick={() => setActiveTab("charts")}
-          >
-            Charts
-          </button>
-        </div>
-        <div
-          className="auth-status"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
-            justifyContent: "center",
-          }}
-        >
-          <span>
-            Logged in as <strong>{auth.username}</strong>
-          </span>
-          <NotificationBell token={auth.token} />
-          <button
-            onClick={() => setDarkMode((prev) => !prev)}
-            style={{
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: "10px",
-              padding: "6px 14px",
-              color: "var(--text)",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "700",
-              transition: "0.2s ease",
-            }}
-          >
-            {darkMode ? "☀️ Light" : "🌙 Dark"}
-          </button>
-        </div>
-      </header>
+      <AppHeader
+        auth={auth}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        darkMode={darkMode}
+        onToggleDark={() => setDarkMode((prev) => !prev)}
+      />
 
       <main className="budget-main">
         <div className="period-filter">
