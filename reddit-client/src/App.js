@@ -19,7 +19,7 @@ import AppHeader from "./AppHeader";
 const API = "http://localhost:5000/api/budget";
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 const CACHE_KEY = "budget-data-cache";
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 const DEFAULT_DATA = {
   currentBalance: 0,
@@ -35,13 +35,11 @@ const CARD_CONFIG = {
   "status-card": { icon: <ShieldCheck size={17} />, iconClass: "icon-green" },
 };
 
-// Strips any HTML/script tags from user input before it's used or sent to the API.
 function sanitize(str) {
   if (typeof str !== "string") return str;
   return str.trim().replace(/<[^>]*>/g, "");
 }
 
-// Checks if a JWT token is expired before trusting it.
 function isTokenExpired(token) {
   if (!token) return true;
   try {
@@ -133,95 +131,40 @@ function ProtectedRoute({ isLoggedIn, children }) {
   return children;
 }
 
+// ── SideNav — always visible on desktop, hidden on mobile ──
 function SideNav({ auth, onLogout, transactions }) {
-  const [isOpen, setIsOpen] = useState(false);
+  if (!auth.isLoggedIn) return null;
 
   return (
-    <>
-      {auth.isLoggedIn && (
-        <button
-          className={`side-nav-toggle ${isOpen ? "open" : ""}`}
-          onClick={() => setIsOpen(!isOpen)}
+    <aside className="side-nav">
+      <div className="side-nav-header">
+        <h3>Menu</h3>
+        <p>Hi, {auth.username}</p>
+      </div>
+      <div className="side-nav-links">
+        <Link to="/profile" className="side-nav-link">
+          Profile
+        </Link>
+        <Link
+          to="/simulator"
+          state={{ transactions }}
+          className="side-nav-link"
         >
-          {isOpen ? "✕" : "☰"}
+          💡 What-if Simulator
+        </Link>
+        <Link to="/subscriptions" className="side-nav-link">
+          📋 Subscription Watcher
+        </Link>
+        <button className="side-nav-link side-nav-logout" onClick={onLogout}>
+          Log Out
         </button>
-      )}
-
-      {auth.isLoggedIn && (
-        <aside className={`side-nav ${isOpen ? "open" : ""}`}>
-          <div className="side-nav-header">
-            <h3>Menu</h3>
-            <p>{auth.isLoggedIn ? `Hi, ${auth.username}` : "Welcome"}</p>
-          </div>
-
-          <div className="side-nav-links">
-            {!auth.isLoggedIn ? (
-              <>
-                <Link
-                  to="/login"
-                  className="side-nav-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Log In
-                </Link>
-                <Link
-                  to="/signup"
-                  className="side-nav-link side-nav-link-alt"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Sign Up
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/profile"
-                  className="side-nav-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Profile
-                </Link>
-                <Link
-                  to="/simulator"
-                  state={{ transactions }}
-                  className="side-nav-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  💡 What-if Simulator
-                </Link>
-                <Link
-                  to="/subscriptions"
-                  className="side-nav-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  📋 Subscription Watcher
-                </Link>
-                <button
-                  className="side-nav-link side-nav-logout"
-                  onClick={() => {
-                    onLogout();
-                    setIsOpen(false);
-                  }}
-                >
-                  Log Out
-                </button>
-              </>
-            )}
-          </div>
-        </aside>
-      )}
-
-      {auth.isLoggedIn && isOpen && (
-        <div className="side-nav-overlay" onClick={() => setIsOpen(false)} />
-      )}
-    </>
+      </div>
+    </aside>
   );
 }
 
 function SummaryCard({ title, amount, subtitle, className, statusText }) {
   const config = CARD_CONFIG[className] || {};
-  const isStatusCard = className?.includes("status-card");
-  const status = amount?.toLowerCase();
 
   return (
     <div className={`summary-card ${className || ""}`}>
@@ -233,7 +176,6 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
           </span>
         )}
       </div>
-
       <h3 className="summary-amount">{amount}</h3>
       <div className="summary-meta">{statusText || subtitle}</div>
     </div>
@@ -247,7 +189,7 @@ function HomePage({ auth, onLogout }) {
   const [period, setPeriod] = useState("week");
   const [darkMode, setDarkMode] = useState(true);
 
-  // Auto-logout when token expires — checks every minute.
+  // Auto-logout when token expires
   useEffect(() => {
     const interval = setInterval(() => {
       if (auth?.token && isTokenExpired(auth.token)) {
@@ -337,7 +279,6 @@ function HomePage({ auth, onLogout }) {
       category: sanitize(newTransaction.category),
       description: sanitize(newTransaction.description || ""),
     };
-
     try {
       clearBudgetCache();
       const res = await fetch(`${API}/transactions`, {
@@ -356,8 +297,6 @@ function HomePage({ auth, onLogout }) {
       if (updated && Array.isArray(updated.transactions)) {
         setBudgetData(updated);
         setCachedBudgetData(updated);
-      } else {
-        console.error("Unexpected response from server:", updated);
       }
     } catch (err) {
       console.error("Failed to add transaction", err);
@@ -375,7 +314,6 @@ function HomePage({ auth, onLogout }) {
       name: sanitize(newBudget.name || ""),
       category: sanitize(newBudget.category || ""),
     };
-
     try {
       clearBudgetCache();
       const res = await fetch(`${API}/budgets`, {
@@ -422,7 +360,6 @@ function HomePage({ auth, onLogout }) {
         return;
       }
       const updated = await res.json();
-
       setBudgetData((prev) => ({
         ...prev,
         currentBalance: updated.currentBalance ?? prev.currentBalance,
@@ -452,19 +389,22 @@ function HomePage({ auth, onLogout }) {
     [transactions, period],
   );
 
-  const totalIncome = useMemo(() => {
-    return filteredTransactions
-      .filter((item) => item.type === "income")
-      .reduce((sum, item) => sum + item.amount, 0);
-  }, [filteredTransactions]);
+  const totalIncome = useMemo(
+    () =>
+      filteredTransactions
+        .filter((item) => item.type === "income")
+        .reduce((sum, item) => sum + item.amount, 0),
+    [filteredTransactions],
+  );
 
-  const totalExpenses = useMemo(() => {
-    return filteredTransactions
-      .filter((item) => item.type === "expense")
-      .reduce((sum, item) => sum + item.amount, 0);
-  }, [filteredTransactions]);
+  const totalExpenses = useMemo(
+    () =>
+      filteredTransactions
+        .filter((item) => item.type === "expense")
+        .reduce((sum, item) => sum + item.amount, 0),
+    [filteredTransactions],
+  );
 
-  const balance = currentBalance;
   const expenseCount = filteredTransactions.filter(
     (item) => item.type === "expense",
   ).length;
@@ -487,6 +427,7 @@ function HomePage({ auth, onLogout }) {
           (period === "all" ? allTimeIncome : filteredCurrentBalance)) *
         100
       : 0;
+
   const spendingStatus =
     spendingRate < 50 ? "Good" : spendingRate < 80 ? "Warning" : "Critical";
 
@@ -505,10 +446,10 @@ function HomePage({ auth, onLogout }) {
     return entries.reduce((max, curr) => (curr[1] > max[1] ? curr : max));
   }, [categoryTotals]);
 
+  // ── Guest view ──
   if (!auth.isLoggedIn) {
     return (
       <div className="app-shell budget-app">
-        <SideNav auth={auth} onLogout={onLogout} transactions={[]} />
         <main className="budget-main">
           <section className="guest-home">
             <div className="guest-hero-card">
@@ -555,122 +496,135 @@ function HomePage({ auth, onLogout }) {
     );
   }
 
+  // ── Logged-in view ──
   return (
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
+      {/* Sidebar — always visible on desktop, hidden on mobile via CSS */}
       <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
 
-      <AppHeader
-        auth={auth}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        darkMode={darkMode}
-        onToggleDark={() => setDarkMode((prev) => !prev)}
-      />
+      {/* Main content area */}
+      <div className="app-body">
+        <AppHeader
+          auth={auth}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          darkMode={darkMode}
+          onToggleDark={() => setDarkMode((prev) => !prev)}
+        />
 
-      <main className="budget-main">
-        <div className="period-filter">
-          <label htmlFor="period-select">Filter by: </label>
-          <select
-            id="period-select"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-          >
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-            <option value="all">All Time</option>
-          </select>
-        </div>
+        <main className="budget-main">
+          <div className="period-filter">
+            <label htmlFor="period-select">Filter by: </label>
+            <select
+              id="period-select"
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+            >
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
 
-        <section className="summary-grid">
-          <SummaryCard
-            title="Biggest Expense"
-            amount={biggestExpenseCategory ? biggestExpenseCategory[0] : "None"}
-            subtitle={
-              biggestExpenseCategory
-                ? currency(biggestExpenseCategory[1])
-                : "No Expenses yet"
-            }
-            className="income-card"
-          />
-          <SummaryCard
-            title="Total Expenses"
-            amount={currency(totalExpenses)}
-            subtitle={`${expenseCount} expense transactions`}
-            className="expense-card"
-          />
-          <SummaryCard
-            title="Current Income"
-            amount={currency(
-              period === "all" ? allTimeIncome : filteredCurrentBalance,
-            )}
-            subtitle={
-              period === "all"
-                ? `Total income (all time)`
-                : `Income for ${period === "week" ? "this week" : period === "month" ? "this month" : "this year"}`
-            }
-            className="balance-card"
-          />
-          <SummaryCard
-            title="Spending Status"
-            amount={spendingStatus}
-            subtitle={`${spendingRate.toFixed(0)}% of income spent`}
-            statusText={`Total Expenses: ${currency(totalExpenses)}`}
-            className={`status-card status-${spendingStatus.toLowerCase()}`}
-          />
-        </section>
+          <section className="summary-grid">
+            <SummaryCard
+              title="Biggest Expense"
+              amount={
+                biggestExpenseCategory ? biggestExpenseCategory[0] : "None"
+              }
+              subtitle={
+                biggestExpenseCategory
+                  ? currency(biggestExpenseCategory[1])
+                  : "No Expenses yet"
+              }
+              className="income-card"
+            />
+            <SummaryCard
+              title="Total Expenses"
+              amount={currency(totalExpenses)}
+              subtitle={`${expenseCount} expense transactions`}
+              className="expense-card"
+            />
+            <SummaryCard
+              title="Current Income"
+              amount={currency(
+                period === "all" ? allTimeIncome : filteredCurrentBalance,
+              )}
+              subtitle={
+                period === "all"
+                  ? `Total income (all time)`
+                  : `Income for ${
+                      period === "week"
+                        ? "this week"
+                        : period === "month"
+                          ? "this month"
+                          : "this year"
+                    }`
+              }
+              className="balance-card"
+            />
+            <SummaryCard
+              title="Spending Status"
+              amount={spendingStatus}
+              subtitle={`${spendingRate.toFixed(0)}% of income spent`}
+              statusText={`Total Expenses: ${currency(totalExpenses)}`}
+              className={`status-card status-${spendingStatus.toLowerCase()}`}
+            />
+          </section>
 
-        {activeTab === "transactions" && (
-          <TransactionsTab
-            transactions={transactions}
-            onAddTransaction={handleAddTransaction}
-          />
-        )}
+          {activeTab === "transactions" && (
+            <TransactionsTab
+              transactions={transactions}
+              onAddTransaction={handleAddTransaction}
+            />
+          )}
 
-        {activeTab === "budgets" && (
-          <BudgetsTab
-            budgets={budgets}
-            categoryTotals={categoryTotals}
-            onAddBudget={handleAddBudget}
-            onAddDeposit={handleAddDeposit}
-          />
-        )}
+          {activeTab === "budgets" && (
+            <BudgetsTab
+              budgets={budgets}
+              categoryTotals={categoryTotals}
+              onAddBudget={handleAddBudget}
+              onAddDeposit={handleAddDeposit}
+            />
+          )}
 
-        {activeTab === "dashboard" && (
-          <InsightsTab
-            transactions={filteredTransactions}
-            budgets={budgets}
-            categoryTotals={categoryTotals}
-            currentBalance={filteredCurrentBalance}
-            period={period}
-          />
-        )}
+          {activeTab === "dashboard" && (
+            <InsightsTab
+              transactions={filteredTransactions}
+              budgets={budgets}
+              categoryTotals={categoryTotals}
+              currentBalance={filteredCurrentBalance}
+              period={period}
+            />
+          )}
 
-        {activeTab === "savings" && (
-          <SavingsTab
-            savingsGoals={savingsGoals}
-            auth={auth}
-            onGoalsUpdate={handleGoalsUpdate}
-          />
-        )}
+          {activeTab === "savings" && (
+            <SavingsTab
+              savingsGoals={savingsGoals}
+              auth={auth}
+              onGoalsUpdate={handleGoalsUpdate}
+            />
+          )}
 
-        {activeTab === "insights" && (
-          <InsightsTab
-            transactions={filteredTransactions}
-            budgets={budgets}
-            categoryTotals={categoryTotals}
-            currentBalance={filteredCurrentBalance}
-            period={period}
-          />
-        )}
+          {activeTab === "insights" && (
+            <InsightsTab
+              transactions={filteredTransactions}
+              budgets={budgets}
+              categoryTotals={categoryTotals}
+              currentBalance={filteredCurrentBalance}
+              period={period}
+            />
+          )}
 
-        {activeTab === "charts" && (
-          <ChartsTab
-            transactions={transactions}
-            currentBalance={currentBalance}
-          />
-        )}
-      </main>
+          {activeTab === "charts" && (
+            <ChartsTab
+              transactions={transactions}
+              currentBalance={currentBalance}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }

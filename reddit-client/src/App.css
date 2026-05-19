@@ -166,11 +166,39 @@ body:has(.light-mode) {
 ========================= */
 
 .app-shell {
-  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   min-height: 100vh;
-  width: 100%;
-  padding: 24px 32px 32px 72px;
-  overflow: hidden;
+  padding: 0;
+}
+
+.app-body {
+  flex: 1;
+  min-width: 0;
+  padding: 24px 32px 32px;
+}
+
+/* =========================
+   MOBILE App Body/Shell
+========================= */
+@media (max-width: 768px) {
+  .side-nav {
+    display: none;
+  }
+
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-body {
+    padding: 12px 12px 90px;
+    width: 100%;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* =========================
@@ -1449,7 +1477,8 @@ body:has(.light-mode) {
 ========================= */
 
 .side-nav-toggle {
-  position: fixed;
+  display: none;
+  /* position: fixed;
   top: 50%;
   left: 16px;
   transform: translateY(-50%);
@@ -1464,7 +1493,7 @@ body:has(.light-mode) {
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(79, 70, 229, 0.28);
-  transition: all 0.25s ease;
+  transition: all 0.25s ease; */
 }
 
 .side-nav-toggle:hover {
@@ -1476,20 +1505,19 @@ body:has(.light-mode) {
 }
 
 .side-nav {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: -240px;
   width: 220px;
   height: 100vh;
-  z-index: 1300;
+  flex-shrink: 0;
+  z-index: 100;
   background: rgba(8, 15, 28, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 12px 0 30px rgba(2, 6, 23, 0.45);
+  box-shadow: 2px 0 12px rgba(2, 6, 23, 0.3);
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  transition: left 0.3s ease;
 }
 
 .side-nav.open {
@@ -1549,10 +1577,11 @@ body:has(.light-mode) {
 }
 
 .side-nav-overlay {
-  position: fixed;
+  /* position: fixed;
   inset: 0;
   z-index: 1100;
-  background: rgba(2, 6, 23, 0.45);
+  background: rgba(2, 6, 23, 0.45); */
+  display: none;
 }
 
 /* =========================

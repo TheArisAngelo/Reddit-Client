@@ -1,28 +1,32 @@
 import React from "react";
-import { Sun, Moon, LayoutDashboard, ArrowLeftRight, Wallet, PiggyBank, Lightbulb, BarChart2 } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  LayoutDashboard,
+  ArrowLeftRight,
+  Wallet,
+  PiggyBank,
+  Lightbulb,
+  BarChart2,
+} from "lucide-react";
 import NotificationBell from "./NotificationBell";
 
-/**
- * AppHeader — drop-in replacement for the <header className="budget-header"> block in HomePage.
- *
- * Props:
- *   auth       — { isLoggedIn, username, token }
- *   activeTab  — string, currently active tab key
- *   onTabChange — (tabKey: string) => void
- *   darkMode   — boolean
- *   onToggleDark — () => void
- */
-
 const TABS = [
-  { key: "dashboard",    label: "Dashboard",    Icon: LayoutDashboard },
-  { key: "transactions", label: "Transactions", Icon: ArrowLeftRight   },
-  { key: "budgets",      label: "Budgets",      Icon: Wallet           },
-  { key: "savings",      label: "Savings",      Icon: PiggyBank        },
-  { key: "insights",     label: "Insights",     Icon: Lightbulb        },
-  { key: "charts",       label: "Charts",       Icon: BarChart2        },
+  { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { key: "transactions", label: "Transactions", Icon: ArrowLeftRight },
+  { key: "budgets", label: "Budgets", Icon: Wallet },
+  { key: "savings", label: "Savings", Icon: PiggyBank },
+  { key: "insights", label: "Insights", Icon: Lightbulb },
+  { key: "charts", label: "Charts", Icon: BarChart2 },
 ];
 
-export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onToggleDark }) {
+export default function AppHeader({
+  auth,
+  activeTab,
+  onTabChange,
+  darkMode,
+  onToggleDark,
+}) {
   return (
     <>
       <style>{`
@@ -41,7 +45,6 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           flex-wrap: wrap;
         }
 
-        /* ── Logo ── */
         .sw-logo {
           font-size: 17px;
           font-weight: 800;
@@ -55,7 +58,6 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           flex-shrink: 0;
         }
 
-        /* ── Tab nav ── */
         .sw-tabs {
           display: flex;
           align-items: center;
@@ -93,16 +95,9 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
         }
 
-        .sw-tab svg {
-          flex-shrink: 0;
-          opacity: 0.85;
-        }
+        .sw-tab svg { flex-shrink: 0; opacity: 0.85; }
+        .sw-tab.active svg { opacity: 1; }
 
-        .sw-tab.active svg {
-          opacity: 1;
-        }
-
-        /* ── Right controls ── */
         .sw-controls {
           display: flex;
           align-items: center;
@@ -110,7 +105,6 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           flex-shrink: 0;
         }
 
-        /* User chip */
         .sw-user-chip {
           display: flex;
           align-items: center;
@@ -146,7 +140,6 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           white-space: nowrap;
         }
 
-        /* Theme toggle */
         .sw-theme-btn {
           display: flex;
           align-items: center;
@@ -167,7 +160,38 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           color: var(--text);
         }
 
-        /* ── Responsive ── */
+        /* ── MOBILE BOTTOM NAV ── */
+        .sw-bottom-nav {
+          display: none;
+        }
+
+        .sw-bottom-tab {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          flex: 1;
+          padding: 8px 4px;
+          border: none;
+          background: transparent;
+          color: var(--muted);
+          font-size: 10px;
+          font-weight: 600;
+          cursor: pointer;
+          font-family: inherit;
+          transition: color 0.18s ease;
+        }
+
+        .sw-bottom-tab.active {
+          color: #a78bfa;
+        }
+
+        .sw-bottom-tab svg {
+          flex-shrink: 0;
+        }
+
+        /* ── RESPONSIVE ── */
         @media (max-width: 900px) {
           .sw-tabs {
             order: 3;
@@ -179,24 +203,43 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           }
         }
 
-        @media (max-width: 640px) {
-          .sw-tab span {
-            display: none;   /* show icon only on mobile */
+        @media (max-width: 768px) {
+          /* Hide top tabs on mobile */
+          .sw-tabs {
+            display: none;
           }
-          .sw-tab {
-            padding: 8px;
+
+          /* Show bottom nav on mobile */
+          .sw-bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(8, 15, 28, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            padding: 6px 0 env(safe-area-inset-bottom, 6px);
           }
+
           .sw-username {
             display: none;
+          }
+
+          .sw-header {
+            margin-bottom: 16px;
+            border-radius: 12px;
           }
         }
       `}</style>
 
+      {/* ── Top header ── */}
       <header className="sw-header">
-        {/* Logo */}
         <div className="sw-logo">SpendWise</div>
 
-        {/* Tab navigation */}
+        {/* Top tab nav — hidden on mobile */}
         <nav className="sw-tabs" role="tablist" aria-label="Main navigation">
           {TABS.map(({ key, label, Icon }) => (
             <button
@@ -212,27 +255,48 @@ export default function AppHeader({ auth, activeTab, onTabChange, darkMode, onTo
           ))}
         </nav>
 
-        {/* Right-side controls */}
         <div className="sw-controls">
           <NotificationBell token={auth.token} />
-
-          <div className="sw-user-chip" aria-label={`Logged in as ${auth.username}`}>
+          <div
+            className="sw-user-chip"
+            aria-label={`Logged in as ${auth.username}`}
+          >
             <div className="sw-avatar" aria-hidden="true">
               {auth.username ? auth.username.slice(0, 2) : "?"}
             </div>
             <span className="sw-username">{auth.username}</span>
           </div>
-
           <button
             className="sw-theme-btn"
             onClick={onToggleDark}
-            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-            title={darkMode ? "Light mode" : "Dark mode"}
+            aria-label={
+              darkMode ? "Switch to light mode" : "Switch to dark mode"
+            }
           >
             {darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
         </div>
       </header>
+
+      {/* ── Bottom tab nav — mobile only ── */}
+      <nav
+        className="sw-bottom-nav"
+        role="tablist"
+        aria-label="Main navigation"
+      >
+        {TABS.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={activeTab === key}
+            className={`sw-bottom-tab${activeTab === key ? " active" : ""}`}
+            onClick={() => onTabChange(key)}
+          >
+            <Icon size={20} aria-hidden="true" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
     </>
   );
 }
