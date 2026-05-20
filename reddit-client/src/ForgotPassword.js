@@ -79,20 +79,15 @@ export default function ForgotPassword() {
         <div className="bg-orb bg-orb-2" />
         <div className="bg-grid" />
 
-        <div className="profile-topbar">
-          <div>
+        <main className="login-layout">
+          <div className="auth-page-header">
             <p className="eyebrow">Reset Password</p>
             <h1 className="create-page-title">Create a new password</h1>
-          </div>
 
-          <div className="create-top-actions">
-            <Link to="/login" className="nav-btn">
+            <Link to="/login" className="nav-btn auth-home-btn">
               Back to Login
             </Link>
           </div>
-        </div>
-
-        <main className="login-layout">
           <section className="create-card login-card">
             <div className="lane-chip">Forgot Password</div>
 
