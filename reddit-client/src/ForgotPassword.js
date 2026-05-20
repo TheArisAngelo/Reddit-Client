@@ -74,7 +74,7 @@ export default function ForgotPassword() {
 
   return (
     <>
-      <div className="app-shell">
+      <div className="app-shell--auth">
         <div className="bg-orb bg-orb-1" />
         <div className="bg-orb bg-orb-2" />
         <div className="bg-grid" />
