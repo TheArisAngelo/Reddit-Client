@@ -113,25 +113,20 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell--auth">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
       <div className="bg-grid" />
 
-      <div className="profile-topbar">
-        <div>
+      <main className="login-layout">
+        <div className="auth-page-header">
           <p className="eyebrow">LOGIN</p>
           <h1 className="create-page-title">Access your account</h1>
-        </div>
 
-        <div className="create-top-actions">
-          <Link to="/" className="nav-btn">
+          <Link to="/" className="nav-btn auth-home-btn">
             Home
           </Link>
         </div>
-      </div>
-
-      <main className="login-layout">
         <section className="create-card login-card">
           <div className="lane-chip">Sign In</div>
 
