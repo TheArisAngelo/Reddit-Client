@@ -523,65 +523,69 @@ function HomePage({ auth, onLogout }) {
         />
 
         <main className="budget-main">
-          <div className="period-filter">
-            <label htmlFor="period-select">Filter by: </label>
-            <select
-              id="period-select"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-            >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
+          {activeTab !== "budgets" && activeTab !== "savings" && (
+            <div className="period-filter">
+              <label htmlFor="period-select">Filter by: </label>
+              <select
+                id="period-select"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+              >
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
+          )}
 
-          <section className="summary-grid">
-            <SummaryCard
-              title="Biggest Expense"
-              amount={
-                biggestExpenseCategory ? biggestExpenseCategory[0] : "None"
-              }
-              subtitle={
-                biggestExpenseCategory
-                  ? currency(biggestExpenseCategory[1])
-                  : "No Expenses yet"
-              }
-              className="income-card"
-            />
-            <SummaryCard
-              title="Total Expenses"
-              amount={currency(totalExpenses)}
-              subtitle={`${expenseCount} expense transactions`}
-              className="expense-card"
-            />
-            <SummaryCard
-              title="Current Income"
-              amount={currency(
-                period === "all" ? allTimeIncome : filteredCurrentBalance,
-              )}
-              subtitle={
-                period === "all"
-                  ? `Total income (all time)`
-                  : `Income for ${
-                      period === "week"
-                        ? "this week"
-                        : period === "month"
-                          ? "this month"
-                          : "this year"
-                    }`
-              }
-              className="balance-card"
-            />
-            <SummaryCard
-              title="Spending Status"
-              amount={spendingStatus}
-              subtitle={`${spendingRate.toFixed(0)}% of income spent`}
-              statusText={`Total Expenses: ${currency(totalExpenses)}`}
-              className={`status-card status-${spendingStatus.toLowerCase()}`}
-            />
-          </section>
+          {activeTab !== "budgets" && activeTab !== "savings" && (
+            <section className="summary-grid">
+              <SummaryCard
+                title="Biggest Expense"
+                amount={
+                  biggestExpenseCategory ? biggestExpenseCategory[0] : "None"
+                }
+                subtitle={
+                  biggestExpenseCategory
+                    ? currency(biggestExpenseCategory[1])
+                    : "No Expenses yet"
+                }
+                className="income-card"
+              />
+              <SummaryCard
+                title="Total Expenses"
+                amount={currency(totalExpenses)}
+                subtitle={`${expenseCount} expense transactions`}
+                className="expense-card"
+              />
+              <SummaryCard
+                title="Current Income"
+                amount={currency(
+                  period === "all" ? allTimeIncome : filteredCurrentBalance,
+                )}
+                subtitle={
+                  period === "all"
+                    ? `Total income (all time)`
+                    : `Income for ${
+                        period === "week"
+                          ? "this week"
+                          : period === "month"
+                            ? "this month"
+                            : "this year"
+                      }`
+                }
+                className="balance-card"
+              />
+              <SummaryCard
+                title="Spending Status"
+                amount={spendingStatus}
+                subtitle={`${spendingRate.toFixed(0)}% of income spent`}
+                statusText={`Total Expenses: ${currency(totalExpenses)}`}
+                className={`status-card status-${spendingStatus.toLowerCase()}`}
+              />
+            </section>
+          )}
 
           {activeTab === "transactions" && (
             <TransactionsTab
