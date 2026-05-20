@@ -138,7 +138,17 @@ function SideNav({ auth, onLogout, transactions }) {
   return (
     <aside className="side-nav">
       <div className="side-nav-header">
-        <h3>Menu</h3>
+        <h3>
+          <Link
+            to="/"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            SpendWise
+          </Link>
+        </h3>
         <p>Hi, {auth.username}</p>
       </div>
       <div className="side-nav-links">
@@ -658,7 +668,12 @@ export default function App() {
         path="/profile"
         element={
           <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
-            <Profile />
+            <div className="app-shell budget-app">
+              <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
+              <div className="app-body">
+                <Profile />
+              </div>
+            </div>
           </ProtectedRoute>
         }
       />

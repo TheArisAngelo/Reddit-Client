@@ -41,35 +41,22 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="app-shell">
-        <div className="bg-orb bg-orb-1" />
-        <div className="bg-orb bg-orb-2" />
-        <div className="bg-grid" />
-
-        <main className="login-layout">
-          <section className="create-card login-card">
-            <div className="lane-chip">Profile</div>
-            <div>Loading profile...</div>
-          </section>
-        </main>
-      </div>
+      <main className="login-layout">
+        <section className="create-card login-card">
+          <div className="lane-chip">Profile</div>
+          <div>Loading profile...</div>
+        </section>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div className="app-shell--auth">
-        <div className="bg-orb bg-orb-1" />
-        <div className="bg-orb bg-orb-2" />
-        <div className="bg-grid" />
-
-        <div className="profile-topbar">
-          <div>
-            <p className="eyebrow">Profile</p>
-            <h1 className="create-page-title">Your Account Details</h1>
-          </div>
-
-          <div className="create-top-actions">
+      <main className="login-layout">
+        <section className="create-card login-card">
+          <div className="lane-chip">Profile</div>
+          <div className="lane-error">{error}</div>
+          <div style={{ marginTop: "16px", display: "flex", gap: "12px" }}>
             <Link to="/" className="nav-btn">
               Home
             </Link>
@@ -77,61 +64,46 @@ export default function Profile() {
               Log In
             </Link>
           </div>
-        </div>
-
-        <main className="login-layout">
-          <section className="create-card login-card">
-            <div className="lane-chip">Profile</div>
-            <div className="lane-error">{error}</div>
-          </section>
-        </main>
-      </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <div className="app-shell--auth">
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-      <div className="bg-grid" />
+    <main className="login-layout">
+      <div className="auth-page-header">
+        <p className="eyebrow">Profile</p>
+        <h1 className="create-page-title">Your account details</h1>
+        {/* <Link to="/" className="nav-btn auth-home-btn">
+          Home
+        </Link> */}
+      </div>
 
-      <main className="login-layout">
-        <div className="auth-page-header">
-          <div>
-            <p className="eyebrow">Profile</p>
-            <h1 className="create-page-title">Your account details</h1>
+      <section className="create-card login-card">
+        <div className="lane-chip">Basic Information</div>
+
+        <div className="create-form">
+          <div className="create-field">
+            <span>Username</span>
+            <input type="text" value={user?.username || ""} readOnly />
           </div>
 
-          <Link to="/" className="nav-btn auth-home-btn">
-            Home
-          </Link>
+          <div className="create-field">
+            <span>Mobile Number</span>
+            <input type="text" value={user?.mobileNumber || ""} readOnly />
+          </div>
+
+          <div className="create-field">
+            <span>Country</span>
+            <input type="text" value={user?.country || ""} readOnly />
+          </div>
+
+          <div className="create-field">
+            <span>Place</span>
+            <input type="text" value={user?.place || ""} readOnly />
+          </div>
         </div>
-        <section className="create-card login-card">
-          <div className="lane-chip">Basic Information</div>
-
-          <div className="create-form">
-            <div className="create-field">
-              <span>Username</span>
-              <input type="text" value={user?.username || ""} readOnly />
-            </div>
-
-            <div className="create-field">
-              <span>Mobile Number</span>
-              <input type="text" value={user?.mobileNumber || ""} readOnly />
-            </div>
-
-            <div className="create-field">
-              <span>Country</span>
-              <input type="text" value={user?.country || ""} readOnly />
-            </div>
-
-            <div className="create-field">
-              <span>Place</span>
-              <input type="text" value={user?.place || ""} readOnly />
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
