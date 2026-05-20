@@ -170,7 +170,9 @@ body:has(.light-mode) {
   flex-direction: row;
   align-items: flex-start;
   min-height: 100vh;
-  padding: 0;
+  width: 100%;
+  padding: 0; 
+  overflow: hidden;
 }
 
 .app-body {
@@ -206,8 +208,9 @@ body:has(.light-mode) {
 ========================= */
 
 .budget-app {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  width: 100%;
 }
 
 .budget-header {
@@ -3669,7 +3672,7 @@ body:has(.light-mode) {
 
 @media (max-width: 900px) {
   .app-shell {
-    padding: 20px 20px 24px 20px;
+    padding: 0;
   }
 
   .add-lane-form {
@@ -3749,7 +3752,7 @@ body:has(.light-mode) {
 
 @media (max-width: 640px) {
   .app-shell {
-    padding: 16px 16px 24px 16px;
+    padding: 0;
   }
 
   .guest-home {
