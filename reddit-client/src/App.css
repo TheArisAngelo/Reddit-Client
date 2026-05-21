@@ -2757,6 +2757,41 @@ body:has(.light-mode) {
   color: #15803d;
 }
 
+/* =========================
+   LIGHT MODE — Profile / Auth Pages
+========================= */
+
+.light-mode .create-page-title {
+  color: #0f172a;
+}
+
+.light-mode .create-field span {
+  color: #334155;
+}
+
+.light-mode .create-field input,
+.light-mode .create-field textarea {
+  background: rgba(241, 245, 249, 0.9);
+  color: #0f172a;
+  border-color: rgba(100, 116, 139, 0.25);
+}
+
+.light-mode .create-field input::placeholder,
+.light-mode .create-field textarea::placeholder {
+  color: #94a3b8;
+}
+
+.light-mode .create-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.light-mode .lane-chip {
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
 /* Spending status badge */
 .spending-badge {
   display: inline-flex;
