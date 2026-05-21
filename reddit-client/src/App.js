@@ -541,7 +541,8 @@ function HomePage({ auth, onLogout }) {
 
           {activeTab !== "budgets" &&
             activeTab !== "savings" &&
-            activeTab !== "insights" && (
+            activeTab !== "insights" &&
+            activeTab !== "charts" && (
               <section className="summary-grid">
                 <SummaryCard
                   title="Biggest Expense"
