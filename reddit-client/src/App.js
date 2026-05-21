@@ -192,12 +192,11 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
   );
 }
 
-function HomePage({ auth, onLogout }) {
+function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
   const [balanceInput, setBalanceInput] = useState("");
   const [period, setPeriod] = useState("week");
-  const [darkMode, setDarkMode] = useState(true);
 
   // Auto-logout when token expires
   useEffect(() => {
@@ -519,7 +518,7 @@ function HomePage({ auth, onLogout }) {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           darkMode={darkMode}
-          onToggleDark={() => setDarkMode((prev) => !prev)}
+          onToggleDark={onToggleDark}
         />
 
         <main className="budget-main">
@@ -648,6 +647,7 @@ function HomePage({ auth, onLogout }) {
 
 export default function App() {
   const [auth, setAuth] = useState(getStoredAuth());
+  const [darkMode, setDarkMode] = useState(true);
 
   const handleLogin = (authData) => {
     clearBudgetCache();
@@ -669,13 +669,22 @@ export default function App() {
     <Routes>
       <Route
         path="/"
-        element={<HomePage auth={auth} onLogout={handleLogout} />}
+        element={
+          <HomePage
+            auth={auth}
+            onLogout={handleLogout}
+            darkMode={darkMode}
+            onToggleDark={() => setDarkMode((prev) => !prev)}
+          />
+        }
       />
       <Route
         path="/profile"
         element={
           <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
-            <div className="app-shell budget-app">
+            <div
+              className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}
+            >
               <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
               <div className="app-body">
                 <Profile />
@@ -691,7 +700,9 @@ export default function App() {
         path="/simulator"
         element={
           <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
-            <div className="app-shell budget-app">
+            <div
+              className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}
+            >
               <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
               <div className="app-body">
                 <WhatIfSimulator />
@@ -704,7 +715,9 @@ export default function App() {
         path="/subscriptions"
         element={
           <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
-            <div className="app-shell budget-app">
+            <div
+              className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}
+            >
               <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
               <div className="app-body">
                 <SubscriptionsTab token={auth.token} />
