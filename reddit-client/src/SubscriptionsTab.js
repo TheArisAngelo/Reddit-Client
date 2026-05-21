@@ -102,13 +102,6 @@ export default function SubscriptionsTab({ token }) {
 
   return (
     <div className="subs-page">
-      {/* Topbar */}
-      <div className="subs-topbar">
-        <Link to="/" className="sim-back-btn">
-          ← Back to SpendWise
-        </Link>
-      </div>
-
       <div className="subs-wrap">
         {/* Page Header */}
         <div className="subs-header">

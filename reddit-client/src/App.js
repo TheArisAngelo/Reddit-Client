@@ -704,7 +704,12 @@ export default function App() {
         path="/subscriptions"
         element={
           <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
-            <SubscriptionsTab token={auth.token} />
+            <div className="app-shell budget-app">
+              <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
+              <div className="app-body">
+                <SubscriptionsTab token={auth.token} />
+              </div>
+            </div>
           </ProtectedRoute>
         }
       />
