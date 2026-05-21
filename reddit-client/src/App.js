@@ -687,7 +687,19 @@ export default function App() {
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/simulator" element={<WhatIfSimulator />} />
+      <Route
+        path="/simulator"
+        element={
+          <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
+            <div className="app-shell budget-app">
+              <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
+              <div className="app-body">
+                <WhatIfSimulator />
+              </div>
+            </div>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/subscriptions"
         element={

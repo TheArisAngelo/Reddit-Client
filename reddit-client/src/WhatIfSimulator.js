@@ -104,13 +104,6 @@ export default function WhatIfSimulator() {
 
   return (
     <div className="simulator-page">
-      {/* Back button */}
-      <div className="simulator-topbar">
-        <Link to="/" className="sim-back-btn">
-          ← Back to SpendWise
-        </Link>
-      </div>
-
       <section className="simulator-wrap">
         <div className="simulator-header">
           <div>

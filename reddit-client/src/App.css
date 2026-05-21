@@ -3098,7 +3098,7 @@ body:has(.light-mode) {
 ========================= */
 .simulator-page {
   min-height: 100vh;
-  background: var(--bg, #0f0f1a);
+  background: transparent;
   color: var(--text);
 }
 
