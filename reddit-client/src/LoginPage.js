@@ -55,15 +55,7 @@ export default function LoginPage({ onLogin }) {
         token: response.data.token,
       };
 
-      const userData = {
-        username: response.data.user.username,
-        mobileNumber: response.data.user.mobileNumber,
-        country: response.data.user.country,
-        place: response.data.user.place,
-      };
-
       sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
-      localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
 
       if (onLogin) onLogin(authData);
       navigate("/");
@@ -93,20 +85,18 @@ export default function LoginPage({ onLogin }) {
         token: response.data.token,
       };
 
-      const userData = {
-        username: response.data.user.username,
-        mobileNumber: response.data.user.mobileNumber || "",
-        country: response.data.user.country || "",
-        place: response.data.user.place || "",
-      };
-
       sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
-      localStorage.setItem("budget-tracker-user", JSON.stringify(userData));
 
       if (onLogin) onLogin(authData);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Google sign-in failed.");
+      if (err.response?.status === 404) {
+        setError(
+          "No account found for this Google account. Please sign up first.",
+        );
+      } else {
+        setError(err.response?.data?.message || "Google sign-in failed.");
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -122,7 +112,6 @@ export default function LoginPage({ onLogin }) {
         <div className="auth-page-header">
           <p className="eyebrow">LOGIN</p>
           <h1 className="create-page-title">Access your account</h1>
-
           <Link to="/" className="nav-btn auth-home-btn">
             Home
           </Link>

@@ -101,6 +101,8 @@ router.get("/me", authMiddleware, async (req, res) => {
         place: user.place,
         isVerified: user.isVerified,
         createdAt: user.createdAt,
+        email: user.email || "",
+        firebaseUid: user.firebaseUid || "",
       },
     });
   } catch (error) {
@@ -132,8 +134,7 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// ─── NEW: Google Sign-in Route ────────────────────────────────────────────────
-// Frontend sends Firebase token → we verify it → return our own JWT
+// ─── Google Sign-in (LOGIN ONLY) ─────────────────────────────────────────────
 router.post("/google", async (req, res) => {
   const { firebaseToken } = req.body;
 
@@ -142,56 +143,29 @@ router.post("/google", async (req, res) => {
   }
 
   try {
-    // Step 1: Verify the Firebase token is legitimate
     const decoded = await admin.auth().verifyIdToken(firebaseToken);
-    const { uid, email, name, picture } = decoded;
+    const { uid, email } = decoded;
 
-    // Step 2: Find existing user by firebaseUid or email
+    // Look for existing user by firebaseUid first
     let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      // Check if user signed up normally with same email before
+      // Fallback: standard account with same email — link it
       user = await User.findOne({ email });
 
       if (user) {
-        // Link existing account to Google
         user.firebaseUid = uid;
         user.isVerified = true;
         await user.save();
       } else {
-        // Brand new Google user — create account in MongoDB
-        const username = name || email.split("@")[0];
-
-        // Make sure username is unique
-        const existingUsername = await User.findOne({ username });
-        const finalUsername = existingUsername
-          ? `${username}_${uid.slice(0, 5)}`
-          : username;
-
-        user = await User.create({
-          firebaseUid: uid,
-          username: finalUsername,
-          email,
-          avatar: picture || "",
-          password: "", // No password for Google users
-          mobileNumber: "",
-          country: "",
-          place: "",
-          isVerified: true,
-        });
-
-        // Create empty budget data for new user
-        await BudgetData.create({
-          userId: user._id,
-          currentBalance: 0,
-          transactions: [],
-          budgets: [],
-          savingsGoals: [],
+        // No account found — block login, must sign up first
+        return res.status(404).json({
+          message:
+            "No account found for this Google account. Please sign up first.",
         });
       }
     }
 
-    // Step 3: Issue your own JWT so the rest of your app works as normal
     const token = jwt.sign(
       { userId: user._id, username: user.username },
       process.env.JWT_SECRET,
@@ -207,10 +181,70 @@ router.post("/google", async (req, res) => {
         mobileNumber: user.mobileNumber || "",
         country: user.country || "",
         place: user.place || "",
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
       },
     });
   } catch (err) {
-    console.error("Google auth error:", err);
+    console.error("Google login error:", err);
+    res.status(401).json({ message: "Invalid Firebase token" });
+  }
+});
+
+// ─── Google Sign-up (SIGNUP ONLY) ────────────────────────────────────────────
+router.post("/google/signup", async (req, res) => {
+  const { firebaseToken } = req.body;
+
+  if (!firebaseToken) {
+    return res.status(400).json({ message: "No Firebase token provided" });
+  }
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(firebaseToken);
+    const { uid, email, name } = decoded;
+
+    // Block if already registered
+    const existingUser = await User.findOne({
+      $or: [{ firebaseUid: uid }, { email }],
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "This Google account is already registered. Please log in.",
+      });
+    }
+
+    // Build a unique username from Google display name or email
+    const baseUsername = name || email.split("@")[0];
+    const existingUsername = await User.findOne({ username: baseUsername });
+    const finalUsername = existingUsername
+      ? `${baseUsername}_${uid.slice(0, 5)}`
+      : baseUsername;
+
+    const user = await User.create({
+      firebaseUid: uid,
+      username: finalUsername,
+      email,
+      password: "",
+      mobileNumber: "",
+      country: "",
+      place: "",
+      isVerified: true,
+    });
+
+    await BudgetData.create({
+      userId: user._id,
+      currentBalance: 0,
+      transactions: [],
+      budgets: [],
+      savingsGoals: [],
+    });
+
+    res
+      .status(201)
+      .json({ message: "Google account registered successfully." });
+  } catch (err) {
+    console.error("Google signup error:", err);
     res.status(401).json({ message: "Invalid Firebase token" });
   }
 });

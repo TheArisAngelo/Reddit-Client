@@ -2,9 +2,41 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./App.css";
+import { auth, googleProvider } from "./firebase";
+import { signInWithPopup } from "firebase/auth";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setGoogleLoading(true);
+      setError("");
+
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseToken = await result.user.getIdToken();
+
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/google/signup",
+        { firebaseToken },
+      );
+
+      navigate("/login", {
+        state: { message: "Google account registered! Please log in." },
+      });
+    } catch (err) {
+      // If account already exists, tell them to log in instead
+      if (err.response?.status === 409) {
+        setError("This Google account is already registered. Please log in.");
+      } else {
+        setError(err.response?.data?.message || "Google sign-up failed.");
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     username: "",
@@ -113,6 +145,27 @@ export default function SignUpPage() {
         </div>
         <section className="create-card login-card">
           <div className="lane-chip">Create Account</div>
+
+          <button
+            type="button"
+            className="google-signin-btn"
+            onClick={handleGoogleSignUp}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              "Signing up..."
+            ) : (
+              <>
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                />
+                Continue with Google
+              </>
+            )}
+          </button>
 
           <form className="create-form" onSubmit={handleSubmit}>
             <label className="create-field">
