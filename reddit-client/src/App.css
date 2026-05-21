@@ -2792,6 +2792,90 @@ body:has(.light-mode) {
   border-color: rgba(124, 58, 237, 0.2);
 }
 
+/* =========================
+   LIGHT MODE — Simulator
+========================= */
+.light-mode .sim-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.light-mode .sim-panel-title {
+  color: #0f172a;
+}
+
+.light-mode .sim-field label {
+  color: #64748b;
+}
+
+.light-mode .sim-field input,
+.light-mode .sim-field select {
+  background: rgba(241, 245, 249, 0.9);
+  color: #0f172a;
+  border-color: rgba(100, 116, 139, 0.25);
+}
+
+.light-mode .sim-slider-label {
+  color: #64748b;
+}
+
+.light-mode .sim-slider-label strong {
+  color: #0f172a;
+}
+
+.light-mode .sim-slider-note {
+  color: #94a3b8;
+}
+
+.light-mode .sim-result-card {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.light-mode .sim-bar-track {
+  background: rgba(203, 213, 225, 0.6);
+}
+
+.light-mode .sim-bar-label,
+.light-mode .sim-bar.val {
+  color: #475569;
+}
+
+.light-mode .result-period {
+  color: #64748b;
+}
+
+.light-mode .chips-label {
+  color: #64748b;
+}
+
+.light-mode .sim-chip {
+  background: rgba(241, 245, 249, 0.9);
+  border-color: rgba(100, 116, 139, 0.25);
+  color: #334155;
+}
+
+.light-mode .sim-chip.active {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.light-mode .simulator-title {
+  color: #0f172a;
+}
+
+.light-mode .simulator-sub {
+  color: #64748b;
+}
+
+.light-mode .budget-summary-value {
+  color: #7c3aed;
+}
+
+.light-mode .budget-progress-category {
+  color: #7c3aed;
+}
+
 /* Spending status badge */
 .spending-badge {
   display: inline-flex;
