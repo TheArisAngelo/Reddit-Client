@@ -76,6 +76,8 @@ router.post("/login", async (req, res) => {
         mobileNumber: user.mobileNumber,
         country: user.country,
         place: user.place,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -97,6 +99,8 @@ router.get("/me", authMiddleware, async (req, res) => {
         mobileNumber: user.mobileNumber,
         country: user.country,
         place: user.place,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -152,6 +156,7 @@ router.post("/google", async (req, res) => {
       if (user) {
         // Link existing account to Google
         user.firebaseUid = uid;
+        user.isVerified = true;
         await user.save();
       } else {
         // Brand new Google user — create account in MongoDB
@@ -172,6 +177,7 @@ router.post("/google", async (req, res) => {
           mobileNumber: "",
           country: "",
           place: "",
+          isVerified: true,
         });
 
         // Create empty budget data for new user

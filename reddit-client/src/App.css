@@ -3779,6 +3779,218 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   Profile - Redesign
+========================= */
+.profile-new-layout {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.profile-new-header {
+  margin-bottom: 1.5rem;
+}
+
+.profile-new-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   Avatar Hero Strip
+========================= */
+.profile-new-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.profile-new-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.profile-new-hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-new-name {
+  margin: 0 0 3px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profile-new-location {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.profile-new-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.profile-badge--verified {
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.profile-badge--google {
+  background: rgba(79, 70, 229, 0.12);
+  color: #818cf8;
+  border: 1px solid rgba(79, 70, 229, 0.25);
+}
+
+/* =========================
+   Sections
+========================= */
+.profile-new-section {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-new-section--footer {
+  border-bottom: none;
+}
+
+.profile-new-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 1rem;
+}
+
+/* =========================
+   2-Column field grid
+========================= */
+.profile-new-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.profile-new-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.profile-new-field--full {
+  grid-column: 1 / -1;
+}
+
+.profile-new-field-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.profile-new-field-value {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* =========================
+   Account Footer Row
+========================= */
+.profile-new-account-row {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.profile-new-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profile-new-stat-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.profile-new-stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profile-stat--verified {
+  color: var(--muted);
+}
+
+/* =========================
+   Loading
+========================= */
+.profile-new-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px;
+  color: var(--muted);
+}
+
+.profile-new-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-new-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-new-field--full {
+    grid-column: 1;
+  }
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 
