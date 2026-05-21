@@ -168,11 +168,11 @@ body:has(.light-mode) {
 .app-shell {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   min-height: 100vh;
   width: 100%;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .app-body {
@@ -1511,8 +1511,10 @@ body:has(.light-mode) {
   position: sticky;
   top: 0;
   width: 220px;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
   flex-shrink: 0;
+  align-self: stretch;
   z-index: 100;
   background: rgba(8, 15, 28, 0.9);
   backdrop-filter: blur(16px);
@@ -1521,6 +1523,7 @@ body:has(.light-mode) {
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .side-nav.open {
@@ -2874,6 +2877,23 @@ body:has(.light-mode) {
 
 .light-mode .budget-progress-category {
   color: #7c3aed;
+}
+
+/* =========================
+   LIGHT MODE — Charts
+========================= */
+
+.light-mode .chart-card {
+  background: rgba(241, 245, 249, 0.7);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.light-mode .chart-title {
+  color: #334155;
+}
+
+.light-mode .panel-card h2 {
+  color: #0f172a;
 }
 
 /* Spending status badge */

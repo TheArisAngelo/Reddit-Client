@@ -637,6 +637,7 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
             <ChartsTab
               transactions={transactions}
               currentBalance={currentBalance}
+              darkMode={darkMode}
             />
           )}
         </main>

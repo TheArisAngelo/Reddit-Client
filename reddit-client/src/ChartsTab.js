@@ -30,7 +30,12 @@ function currency(amount) {
   return `₱${Math.round(Number(amount || 0))}`;
 }
 
-export default function ChartsTab({ transactions, currentBalance }) {
+export default function ChartsTab({ transactions, currentBalance, darkMode }) {
+  const axisColor = darkMode ? "#94a3b8" : "#64748b";
+  const gridColor = darkMode
+    ? "rgba(148,163,184,0.1)"
+    : "rgba(100,116,139,0.15)";
+
   // Pie Chart
   const pieData = useMemo(() => {
     const categoryTotals = transactions
@@ -138,17 +143,14 @@ export default function ChartsTab({ transactions, currentBalance }) {
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={lineData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(148,163,184,0.1)"
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis
                     dataKey="date"
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    tick={{ fill: "axisColor", fontSize: 12 }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    tick={{ fill: "axisColor", fontSize: 12 }}
                     tickLine={false}
                     tickFormatter={(v) => `₱${v}`}
                   />
@@ -173,10 +175,7 @@ export default function ChartsTab({ transactions, currentBalance }) {
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={barData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(148,163,184,0.1)"
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis
                     dataKey="month"
                     tick={{ fill: "#94a3b8", fontSize: 12 }}
