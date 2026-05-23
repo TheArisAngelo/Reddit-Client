@@ -7,6 +7,9 @@ const router = express.Router();
 
 const CACHE_KEY = "/api/budget";
 
+// ── Helper ────────────────────────────────────────────────────────────────────
+const userCacheKey = (req) => `${req.user.userId}:${CACHE_KEY}`;
+
 router.get("/", authMiddleware, cache, async (req, res) => {
   try {
     let budgetData = await BudgetData.findOne({ userId: req.user.userId });
@@ -30,10 +33,8 @@ router.get("/", authMiddleware, cache, async (req, res) => {
 router.put("/balance", authMiddleware, async (req, res) => {
   try {
     const { addBalance } = req.body;
-    console.log("addBalance received:", addBalance, typeof addBalance);
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
@@ -42,10 +43,9 @@ router.put("/balance", authMiddleware, async (req, res) => {
       (budgetData.currentBalance || 0) + Number(addBalance);
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
-    console.error("Balance update error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
@@ -55,7 +55,6 @@ router.post("/transactions", authMiddleware, async (req, res) => {
     const newTransaction = req.body;
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
@@ -70,7 +69,7 @@ router.post("/transactions", authMiddleware, async (req, res) => {
 
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -79,11 +78,9 @@ router.post("/transactions", authMiddleware, async (req, res) => {
 
 router.post("/budgets", authMiddleware, async (req, res) => {
   try {
-    console.log("Budget received:", req.body);
     const newBudget = req.body;
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
@@ -91,7 +88,7 @@ router.post("/budgets", authMiddleware, async (req, res) => {
     budgetData.budgets.unshift(newBudget);
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -104,13 +101,11 @@ router.post("/budgets/:budgetId/deposits", authMiddleware, async (req, res) => {
     const { amount, note, date } = req.body;
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
 
     const budget = budgetData.budgets.id(budgetId);
-
     if (!budget) {
       return res.status(404).json({ message: "Budget not found" });
     }
@@ -118,16 +113,13 @@ router.post("/budgets/:budgetId/deposits", authMiddleware, async (req, res) => {
     budget.deposits.push({ amount, note, date });
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// ── Savings Routes ────────────────────────────────────────────
-
-// POST /api/budget/savings — create a new savings goal
 router.post("/savings", authMiddleware, async (req, res) => {
   try {
     const { title, target, saved, deadline, category } = req.body;
@@ -139,7 +131,6 @@ router.post("/savings", authMiddleware, async (req, res) => {
     }
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
@@ -154,15 +145,13 @@ router.post("/savings", authMiddleware, async (req, res) => {
 
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
-    console.error("Failed to create savings goal:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// POST /api/budget/savings/:goalId/contribute — add savings to a goal
 router.post("/savings/:goalId/contribute", authMiddleware, async (req, res) => {
   try {
     const { goalId } = req.params;
@@ -173,46 +162,36 @@ router.post("/savings/:goalId/contribute", authMiddleware, async (req, res) => {
     }
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
 
     const goal = budgetData.savingsGoals.id(goalId);
-
     if (!goal) {
       return res.status(404).json({ message: "Savings goal not found" });
     }
 
-    goal.saved = (goal.saved || 0) + Number(amount);
-
-    if (goal.saved > goal.target) {
-      goal.saved = goal.target;
-    }
+    goal.saved = Math.min((goal.saved || 0) + Number(amount), goal.target);
 
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
-    console.error("Failed to contribute to savings goal:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// DELETE /api/budget/savings/:goalId — delete a savings goal
 router.delete("/savings/:goalId", authMiddleware, async (req, res) => {
   try {
     const { goalId } = req.params;
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
-
     if (!budgetData) {
       return res.status(404).json({ message: "Budget data not found" });
     }
 
     const goal = budgetData.savingsGoals.id(goalId);
-
     if (!goal) {
       return res.status(404).json({ message: "Savings goal not found" });
     }
@@ -220,17 +199,13 @@ router.delete("/savings/:goalId", authMiddleware, async (req, res) => {
     goal.deleteOne();
     await budgetData.save();
 
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json(budgetData);
   } catch (error) {
-    console.error("Failed to delete savings goal:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// - Subscription Routes
-
-// GET /api/budget/subscriptions
 router.get("/subscriptions", authMiddleware, async (req, res) => {
   try {
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
@@ -241,14 +216,14 @@ router.get("/subscriptions", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/budget/subscriptions
 router.post("/subscriptions", authMiddleware, async (req, res) => {
   try {
     const { name, amount, billingCycle, renewalDate, category } = req.body;
-    if (!name || !amount || !renewalDate)
+    if (!name || !amount || !renewalDate) {
       return res
         .status(400)
         .json({ message: "Name, amount, and renewal date are required" });
+    }
 
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
     if (!budgetData) return res.status(404).json({ message: "Not found" });
@@ -262,26 +237,26 @@ router.post("/subscriptions", authMiddleware, async (req, res) => {
     });
 
     await budgetData.save();
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json({ subscriptions: budgetData.subscriptions });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
   }
 });
 
-// Delete /api/budget/subscriptions/:id
 router.delete("/subscriptions/:id", authMiddleware, async (req, res) => {
   try {
     const budgetData = await BudgetData.findOne({ userId: req.user.userId });
     if (!budgetData) return res.status(404).json({ message: "Not found" });
 
     const sub = budgetData.subscriptions.id(req.params.id);
-    if (!sub)
-      return (res, status(404).json({ message: "Subscription not found" }));
+    if (!sub) {
+      return res.status(404).json({ message: "Subscription not found" }); // ✅ also fixed a syntax error here
+    }
 
     sub.deleteOne();
     await budgetData.save();
-    cache.del(CACHE_KEY);
+    cache.del(userCacheKey(req)); // ✅
     res.json({ subscriptions: budgetData.subscriptions });
   } catch (error) {
     res.status(500).json({ message: "Server error" });

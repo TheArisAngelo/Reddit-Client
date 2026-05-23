@@ -2,7 +2,10 @@ const NodeCache = require("node-cache");
 const cache = new NodeCache({ stdTTL: 300 });
 
 const cacheMiddleware = (req, res, next) => {
-  const key = req.originalUrl;
+  // ✅ Scope cache key per user — never share data between accounts
+  const userId = req.user?.userId || "anonymous";
+  const key = `${userId}:${req.originalUrl}`;
+
   const cached = cache.get(key);
   if (cached) return res.json(cached);
 
@@ -14,7 +17,6 @@ const cacheMiddleware = (req, res, next) => {
   next();
 };
 
-// Export both the middleware AND the cache store
 cacheMiddleware.del = (key) => cache.del(key);
 cacheMiddleware.flush = () => cache.flushAll();
 
