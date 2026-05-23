@@ -8,6 +8,15 @@ const admin = require("../utils/firebaseAdmin");
 
 const router = express.Router();
 
+// ─── Helper ───────────────────────────────────────────────────────────────────
+const issueJWT = (user) =>
+  jwt.sign(
+    { userId: user._id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+
+// ─── POST /api/auth/signup ────────────────────────────────────────────────────
 router.post("/signup", async (req, res) => {
   try {
     const { username, password, mobileNumber, country, place } = req.body;
@@ -17,7 +26,6 @@ router.post("/signup", async (req, res) => {
     }
 
     const existingUser = await User.findOne({ username });
-
     if (existingUser) {
       return res.status(400).json({ message: "Username already exists" });
     }
@@ -46,27 +54,22 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// ─── POST /api/auth/login ─────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
-
-    if (!user) {
+    if (!user || !user.password) {
       return res.status(400).json({ message: "Invalid username or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid username or password" });
     }
 
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
+    const token = issueJWT(user);
 
     res.json({
       message: "Login successful",
@@ -85,10 +88,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -110,6 +113,7 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
+// ─── POST /api/auth/reset-password ───────────────────────────────────────────
 router.post("/reset-password", async (req, res) => {
   try {
     const { username, newPassword } = req.body;
@@ -119,13 +123,19 @@ router.post("/reset-password", async (req, res) => {
     }
 
     const user = await User.findOne({ username });
-
     if (!user) {
       return res.status(404).json({ message: "Username not found." });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    // FIX: Block password reset for Google-only accounts
+    if (user.firebaseUid && !user.password) {
+      return res.status(400).json({
+        message:
+          "This account uses Google sign-in and has no password to reset.",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({ message: "Password reset successful." });
@@ -134,7 +144,7 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// ─── Google Sign-in (LOGIN ONLY) ─────────────────────────────────────────────
+// ─── POST /api/auth/google (SIGN IN ONLY) ────────────────────────────────────
 router.post("/google", async (req, res) => {
   const { firebaseToken } = req.body;
 
@@ -146,19 +156,25 @@ router.post("/google", async (req, res) => {
     const decoded = await admin.auth().verifyIdToken(firebaseToken);
     const { uid, email } = decoded;
 
-    // Look for existing user by firebaseUid first
+    // Find by firebaseUid first, then email
     let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      // Fallback: standard account with same email — link it
       user = await User.findOne({ email });
 
       if (user) {
+        // FIX: Only link if this is NOT a local-only (password) account
+        if (user.password) {
+          return res.status(403).json({
+            message:
+              "This email is already registered with a username and password. Please log in normally.",
+          });
+        }
+        // Safe to link — no password set, clearly a Google account
         user.firebaseUid = uid;
         user.isVerified = true;
         await user.save();
       } else {
-        // No account found — block login, must sign up first
         return res.status(404).json({
           message:
             "No account found for this Google account. Please sign up first.",
@@ -166,11 +182,7 @@ router.post("/google", async (req, res) => {
       }
     }
 
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
+    const token = issueJWT(user);
 
     res.json({
       message: "Google login successful",
@@ -191,7 +203,7 @@ router.post("/google", async (req, res) => {
   }
 });
 
-// ─── Google Sign-up (SIGNUP ONLY) ────────────────────────────────────────────
+// ─── POST /api/auth/google/signup (SIGN UP ONLY) ─────────────────────────────
 router.post("/google/signup", async (req, res) => {
   const { firebaseToken } = req.body;
 
@@ -203,18 +215,17 @@ router.post("/google/signup", async (req, res) => {
     const decoded = await admin.auth().verifyIdToken(firebaseToken);
     const { uid, email, name } = decoded;
 
-    // Block if already registered
     const existingUser = await User.findOne({
       $or: [{ firebaseUid: uid }, { email }],
     });
 
     if (existingUser) {
       return res.status(409).json({
-        message: "This Google account is already registered. Please log in.",
+        message:
+          "This Google account is already registered. Please log in instead.",
       });
     }
 
-    // Build a unique username from Google display name or email
     const baseUsername = name || email.split("@")[0];
     const existingUsername = await User.findOne({ username: baseUsername });
     const finalUsername = existingUsername
