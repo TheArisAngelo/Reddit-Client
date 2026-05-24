@@ -3991,6 +3991,129 @@ body:has(.light-mode) {
 }
 
 /* =========================
+ Verification Panel Container
+========================= */
+
+.profile-verify-panel {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 24px 0 8px;
+  margin-top: 8px;
+}
+
+.profile-verify-panel--success {
+  padding: 16px 0;
+}
+
+.profile-verify-desc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 6px 0 14px;
+  line-height: 1.5;
+}
+
+/* =========================
+   Input & Button Row
+========================= */
+
+.profile-verify-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profile-verify-input {
+  flex: 1;
+  min-width: 180px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.profile-verify-input:focus {
+  border-color: rgba(108, 71, 255, 0.7);
+}
+
+.profile-verify-input--otp {
+  letter-spacing: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  max-width: 160px;
+  text-align: center;
+}
+
+/* =========================
+   Primary Action Button
+========================= */
+
+.profile-verify-btn {
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    opacity 0.2s;
+}
+
+.profile-verify-btn:hover:not(:disabled) {
+  background: #7d5cff;
+}
+
+.profile-verify-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Feedback Messages
+========================= */
+
+.profile-verify-error {
+  font-size: 13px;
+  color: #f87171;
+  margin: 8px 0 0;
+}
+
+.profile-verify-success {
+  font-size: 13px;
+  color: #4ade80;
+  margin: 0 0 8px;
+}
+
+/* =========================
+   Resend Row
+========================= */
+
+.profile-verify-resend {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 10px 0 0;
+}
+
+.profile-verify-link {
+  background: none;
+  border: none;
+  color: #a78bfa;
+  font-size: 13px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.profile-verify-link:hover {
+  color: #c4b5fd;
+}
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 

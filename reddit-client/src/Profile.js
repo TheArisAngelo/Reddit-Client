@@ -4,6 +4,7 @@ import axios from "axios";
 import "./App.css";
 
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
+const API = "http://localhost:5000/api/auth";
 
 function getInitials(username) {
   if (!username) return "?";
@@ -20,38 +21,118 @@ function formatDate(dateStr) {
   });
 }
 
+function getToken() {
+  const raw = sessionStorage.getItem(AUTH_STORAGE_KEY);
+  const parsed = raw ? JSON.parse(raw) : null;
+  return parsed?.token || null;
+}
+
+// ── Verification steps: "idle" | "enterEmail" | "enterOtp" | "done"
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Verification state
+  const [verifyStep, setVerifyStep] = useState("idle");
+  const [emailInput, setEmailInput] = useState("");
+  const [otpInput, setOtpInput] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
+  const [verifySuccess, setVerifySuccess] = useState("");
+  const [countdown, setCountdown] = useState(0);
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const savedAuthRaw = sessionStorage.getItem(AUTH_STORAGE_KEY);
-        const savedAuth = savedAuthRaw ? JSON.parse(savedAuthRaw) : null;
-
-        if (!savedAuth?.token) {
-          setError("No token found. Please log in.");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get("http://localhost:5000/api/auth/me", {
-          headers: { Authorization: `Bearer ${savedAuth.token}` },
-        });
-
-        setUser(response.data.user);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load user profile.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
 
+  // Countdown timer for resend
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const fetchProfile = async () => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setError("No token found. Please log in.");
+        setLoading(false);
+        return;
+      }
+      const response = await axios.get(`${API}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(response.data.user);
+      if (response.data.user.email) {
+        setEmailInput(response.data.user.email);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load user profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    setVerifyError("");
+    setVerifySuccess("");
+    if (!emailInput.trim()) {
+      setVerifyError("Please enter your email address.");
+      return;
+    }
+    setVerifyLoading(true);
+    try {
+      await axios.post(
+        `${API}/send-otp`,
+        { email: emailInput.trim() },
+        { headers: { Authorization: `Bearer ${getToken()}` } },
+      );
+      setVerifyStep("enterOtp");
+      setVerifySuccess("A 6-digit code was sent to your email.");
+      setCountdown(60);
+    } catch (err) {
+      setVerifyError(err.response?.data?.message || "Failed to send OTP.");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setVerifyError("");
+    setVerifySuccess("");
+    if (!otpInput.trim()) {
+      setVerifyError("Please enter the code from your email.");
+      return;
+    }
+    setVerifyLoading(true);
+    try {
+      await axios.post(
+        `${API}/verify-otp`,
+        { otp: otpInput.trim() },
+        { headers: { Authorization: `Bearer ${getToken()}` } },
+      );
+      setVerifyStep("done");
+      setVerifySuccess("Your email has been verified!");
+      setUser((prev) => ({ ...prev, isVerified: true, email: emailInput }));
+    } catch (err) {
+      setVerifyError(
+        err.response?.data?.message || "Incorrect or expired code.",
+      );
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleResend = () => {
+    setOtpInput("");
+    setVerifyError("");
+    setVerifySuccess("");
+    setVerifyStep("enterEmail");
+  };
+
+  // ── Render states
   if (loading) {
     return (
       <main className="profile-new-layout">
@@ -173,13 +254,125 @@ export default function Profile() {
             <div className="profile-new-stat">
               <span className="profile-new-stat-label">Status</span>
               <span
-                className={`profile-new-stat-value ${isVerified ? "profile-stat--verified" : "profile-stat--unverified"}`}
+                className={`profile-new-stat-value ${
+                  isVerified
+                    ? "profile-stat--verified"
+                    : "profile-stat--unverified"
+                }`}
               >
                 {isVerified ? "Verified" : "Unverified"}
               </span>
             </div>
           </div>
         </div>
+
+        {/* ── Email Verification Panel (only for non-Google, unverified users) */}
+        {!isGoogleUser && !isVerified && verifyStep !== "done" && (
+          <div className="profile-verify-panel">
+            <p className="profile-new-section-label">Verify your account</p>
+
+            {verifyStep === "idle" && (
+              <>
+                <p className="profile-verify-desc">
+                  Verify your email address to confirm your identity and unlock
+                  the Verified badge.
+                </p>
+                <button
+                  className="profile-verify-btn"
+                  onClick={() => setVerifyStep("enterEmail")}
+                >
+                  Verify email
+                </button>
+              </>
+            )}
+
+            {verifyStep === "enterEmail" && (
+              <>
+                <p className="profile-verify-desc">
+                  Enter the email address you'd like to verify.
+                </p>
+                <div className="profile-verify-row">
+                  <input
+                    type="email"
+                    className="profile-verify-input"
+                    placeholder="you@example.com"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
+                  />
+                  <button
+                    className="profile-verify-btn"
+                    onClick={handleSendOtp}
+                    disabled={verifyLoading}
+                  >
+                    {verifyLoading ? "Sending…" : "Send code"}
+                  </button>
+                </div>
+                {verifyError && (
+                  <p className="profile-verify-error">{verifyError}</p>
+                )}
+              </>
+            )}
+
+            {verifyStep === "enterOtp" && (
+              <>
+                {verifySuccess && (
+                  <p className="profile-verify-success">{verifySuccess}</p>
+                )}
+                <p className="profile-verify-desc">
+                  Enter the 6-digit code sent to <strong>{emailInput}</strong>.
+                </p>
+                <div className="profile-verify-row">
+                  <input
+                    type="text"
+                    className="profile-verify-input profile-verify-input--otp"
+                    placeholder="_ _ _ _ _ _"
+                    maxLength={6}
+                    value={otpInput}
+                    onChange={(e) =>
+                      setOtpInput(e.target.value.replace(/\D/g, ""))
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
+                  />
+                  <button
+                    className="profile-verify-btn"
+                    onClick={handleVerifyOtp}
+                    disabled={verifyLoading}
+                  >
+                    {verifyLoading ? "Verifying…" : "Verify"}
+                  </button>
+                </div>
+                {verifyError && (
+                  <p className="profile-verify-error">{verifyError}</p>
+                )}
+                <p className="profile-verify-resend">
+                  {countdown > 0 ? (
+                    <>Resend available in {countdown}s</>
+                  ) : (
+                    <>
+                      Didn't get it?{" "}
+                      <button
+                        className="profile-verify-link"
+                        onClick={handleResend}
+                      >
+                        Resend code
+                      </button>
+                    </>
+                  )}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Success message after verification */}
+        {verifyStep === "done" && (
+          <div className="profile-verify-panel profile-verify-panel--success">
+            <p className="profile-verify-success">
+              ✓ Your account is now verified!
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

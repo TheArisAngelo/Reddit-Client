@@ -5,6 +5,8 @@ const User = require("../models/User");
 const BudgetData = require("../models/BudgetData");
 const authMiddleware = require("../middleware/authMiddleware");
 const admin = require("../utils/firebaseAdmin");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const router = express.Router();
 
@@ -257,6 +259,107 @@ router.post("/google/signup", async (req, res) => {
   } catch (err) {
     console.error("Google signup error:", err);
     res.status(401).json({ message: "Invalid Firebase token" });
+  }
+});
+
+// - POST /api/auth/send-otp
+router.post("/send-otp", authMiddleware, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // Check if email is already used by another account
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: req.user.userId },
+    });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: "Email is already in use by another account." });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    await User.findByIdAndUpdate(req.user.userId, {
+      email,
+      emailOtp: otp,
+      otpExpiry: expiry,
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"SpendWise" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your SpendWise Verification Code",
+      html: `
+      <div style="font-family: sans-serif; max-width: 400px; margin: auto;">
+          <h2>Verify your email</h2>
+          <p>Your one-time verification code is:</p>
+          <h1 style="letter-spacing: 8px; color: #6c47ff;">${otp}</h1>
+          <p>This code expires in <strong>10 minutes</strong>.</p>
+          <p style="color: #888;">If you didn't request this, ignore this email.</p>
+        </div>
+      `,
+    });
+
+    res.json({ message: "OTP sent to your email." });
+  } catch (error) {
+    console.error("Send OTP error:", error);
+    res.status(500).json({ message: "Failed to send OTP." });
+  }
+});
+
+// - POST /api/auth/verify-otp
+router.post("/verify-otp", authMiddleware, async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required." });
+    }
+
+    const user = await User.findById(req.user.userId);
+
+    if (!user.emailOtp || !user.otpExpiry) {
+      return res
+        .status(400)
+        .json({ message: "No OTP requested. Please request one first." });
+    }
+
+    if (new Date() > user.otpExpiry) {
+      return res
+        .status(400)
+        .json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    if (user.emailOtp !== otp) {
+      return res
+        .status(400)
+        .json({ message: "Incorrect OTP. Please try again." });
+    }
+
+    await User.findByIdAndUpdate(req.user.userId, {
+      isVerified: true,
+      emailOtp: "",
+      otpExpiry: null,
+    });
+
+    res.json({ message: "Email verified successfully!" });
+  } catch (error) {
+    console.error("verify OTP error:", error);
+    res.status(500).json({ message: "Server error." });
   }
 });
 

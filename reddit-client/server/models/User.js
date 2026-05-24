@@ -60,7 +60,15 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
-    }
+    },
+    emailOtp: {
+      type: String,
+      default: "",
+    },
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
