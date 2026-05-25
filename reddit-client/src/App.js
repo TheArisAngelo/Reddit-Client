@@ -173,7 +173,15 @@ function SideNav({ auth, onLogout, transactions }) {
   );
 }
 
-function SummaryCard({ title, amount, subtitle, className, statusText }) {
+function SummaryCard({
+  title,
+  amount,
+  subtitle,
+  className,
+  statusText,
+  onEmptyAction,
+  isEmpty,
+}) {
   const config = CARD_CONFIG[className] || {};
 
   return (
@@ -186,8 +194,23 @@ function SummaryCard({ title, amount, subtitle, className, statusText }) {
           </span>
         )}
       </div>
-      <h3 className="summary-amount">{amount}</h3>
-      <div className="summary-meta">{statusText || subtitle}</div>
+
+      {isEmpty ? (
+        <div className="summary-empty">
+          <span className="summary-empty-dash" />
+          <h3 className="summary-amount summary-amount--muted">{amount}</h3>
+          {onEmptyAction && (
+            <button className="summary-empty-cta" onClick={onEmptyAction}>
+              {subtitle} →
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <h3 className="summary-amount">{amount}</h3>
+          <div className="summary-meta">{statusText || subtitle}</div>
+        </>
+      )}
     </div>
   );
 }
@@ -546,19 +569,25 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
                 <SummaryCard
                   title="Biggest Expense"
                   amount={
-                    biggestExpenseCategory ? biggestExpenseCategory[0] : "None"
-                  }
-                  subtitle={
                     biggestExpenseCategory
-                      ? currency(biggestExpenseCategory[1])
-                      : "No Expenses yet"
+                      ? biggestExpenseCategory[0]
+                      : "None yet"
                   }
+                  subtitle="Add transaction"
+                  isEmpty={!biggestExpenseCategory}
+                  onEmptyAction={() => setActiveTab("transactions")}
                   className="income-card"
                 />
                 <SummaryCard
                   title="Total Expenses"
                   amount={currency(totalExpenses)}
-                  subtitle={`${expenseCount} expense transactions`}
+                  subtitle={
+                    expenseCount === 0
+                      ? "Log your first expense"
+                      : `${expenseCount} expense transactions`
+                  }
+                  isEmpty={expenseCount === 0}
+                  onEmptyAction={() => setActiveTab("transactions")}
                   className="expense-card"
                 />
                 <SummaryCard
@@ -567,23 +596,24 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
                     period === "all" ? allTimeIncome : filteredCurrentBalance,
                   )}
                   subtitle={
-                    period === "all"
-                      ? `Total income (all time)`
-                      : `Income for ${
-                          period === "week"
-                            ? "this week"
-                            : period === "month"
-                              ? "this month"
-                              : "this year"
-                        }`
+                    totalIncome === 0
+                      ? "Add income"
+                      : `Income for this ${period}`
                   }
+                  isEmpty={totalIncome === 0}
+                  onEmptyAction={() => setActiveTab("transactions")}
                   className="balance-card"
                 />
                 <SummaryCard
                   title="Spending Status"
                   amount={spendingStatus}
-                  subtitle={`${spendingRate.toFixed(0)}% of income spent`}
-                  statusText={`Total Expenses: ${currency(totalExpenses)}`}
+                  subtitle="Start adding transactions"
+                  statusText={
+                    expenseCount > 0
+                      ? `Total Expenses: ${currency(totalExpenses)}`
+                      : undefined
+                  }
+                  isEmpty={expenseCount === 0}
                   className={`status-card status-${spendingStatus.toLowerCase()}`}
                 />
               </section>

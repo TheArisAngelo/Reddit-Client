@@ -4126,6 +4126,39 @@ body:has(.light-mode) {
 .profile-verify-link:hover {
   color: #c4b5fd;
 }
+
+/* =========================
+   Summary Card Updated UI
+========================= */
+.summary-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.summary-empty-dash {
+  display: block;
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--border-color);
+}
+.summary-amount--muted {
+  color: var(--text-muted);
+}
+.summary-empty-cta {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--accent-teal);
+  cursor: pointer;
+  text-align: left;
+}
+.summary-empty-cta:hover {
+  text-decoration: underline;
+}
+
 /* =========================
    RESPONSIVE — 1100px
 ========================= */
