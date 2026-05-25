@@ -3996,18 +3996,27 @@ body:has(.light-mode) {
 
 .profile-verify-panel {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 24px 0 8px;
-  margin-top: 8px;
+  padding: 24px 28px 28px;
+  margin-top: 0;
 }
 
 .profile-verify-panel--success {
-  padding: 16px 0;
+  padding: 20px 28px;
+}
+
+.profile-new-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0 0 12px;
 }
 
 .profile-verify-desc {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.55);
-  margin: 6px 0 14px;
+  margin: 0 0 16px;
   line-height: 1.5;
 }
 
@@ -4033,6 +4042,10 @@ body:has(.light-mode) {
   color: #fff;
   outline: none;
   transition: border-color 0.2s;
+}
+
+.profile-verify-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .profile-verify-input:focus {
@@ -4082,13 +4095,13 @@ body:has(.light-mode) {
 .profile-verify-error {
   font-size: 13px;
   color: #f87171;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
 }
 
 .profile-verify-success {
   font-size: 13px;
   color: #4ade80;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 
 /* =========================
@@ -4098,7 +4111,7 @@ body:has(.light-mode) {
 .profile-verify-resend {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.4);
-  margin: 10px 0 0;
+  margin: 12px 0 0;
 }
 
 .profile-verify-link {
