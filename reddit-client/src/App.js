@@ -153,7 +153,7 @@ function SideNav({ auth, onLogout, transactions }) {
       </div>
       <div className="side-nav-links">
         <Link to="/profile" className="side-nav-link">
-          Profile
+          👤 Profile
         </Link>
         <Link
           to="/simulator"
@@ -166,7 +166,7 @@ function SideNav({ auth, onLogout, transactions }) {
           📋 Subscription Watcher
         </Link>
         <button className="side-nav-link side-nav-logout" onClick={onLogout}>
-          Log Out
+          ➜] Log Out
         </button>
       </div>
     </aside>
