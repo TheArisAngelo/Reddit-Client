@@ -202,7 +202,7 @@ export default function SignUpPage() {
             </label>
 
             <label className="create-field">
-              <span>Place</span>
+              <span>City</span>
               <input
                 type="text"
                 name="place"
