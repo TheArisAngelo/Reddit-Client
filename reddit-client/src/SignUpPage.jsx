@@ -40,6 +40,7 @@ export default function SignUpPage() {
 
   const [formData, setFormData] = useState({
     username: "",
+    email: "",
     password: "",
     confirmPassword: "",
     mobileNumber: "",
@@ -65,6 +66,8 @@ export default function SignUpPage() {
     event.preventDefault();
 
     const username = formData.username.trim();
+    const email = formData.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const password = formData.password.trim();
     const confirmPassword = formData.confirmPassword.trim();
     const mobileNumber = formData.mobileNumber.trim();
@@ -73,6 +76,16 @@ export default function SignUpPage() {
 
     if (!username) {
       setError("Please enter a username");
+      return;
+    }
+
+    if (!email) {
+      setError("Please enter your email");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -106,6 +119,7 @@ export default function SignUpPage() {
 
       await axios.post("http://localhost:5000/api/auth/signup", {
         username,
+        email,
         password,
         mobileNumber,
         country,
@@ -170,6 +184,17 @@ export default function SignUpPage() {
                 name="username"
                 placeholder="Choose a username"
                 value={formData.username}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="create-field">
+              <span>Email</span>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email address"
+                value={formData.email}
                 onChange={handleChange}
               />
             </label>
