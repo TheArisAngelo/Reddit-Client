@@ -180,7 +180,7 @@ export default function SignUpPage() {
             </label>
 
             <label className="create-field">
-              <span>Mobile Number</span>
+              <span>Mobile Number (Optional)</span>
               <input
                 type="text"
                 name="mobileNumber"
