@@ -76,11 +76,6 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!mobileNumber) {
-      setError("Please enter your mobile number");
-      return;
-    }
-
     if (!country) {
       setError("Please enter your country");
       return;
