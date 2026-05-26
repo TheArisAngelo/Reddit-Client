@@ -46,6 +46,7 @@ router.post("/signup", async (req, res) => {
       mobileNumber,
       country,
       place,
+      isVerified: true,
     });
 
     await BudgetData.create({

@@ -267,7 +267,7 @@ export default function Profile() {
         </div>
 
         {/* ── Email Verification Panel (only for non-Google, unverified users) */}
-        {!isGoogleUser && !isVerified && verifyStep !== "done" && (
+        {!isGoogleUser && !isVerified && !user?.email && verifyStep !== "done" && (
           <div className="profile-verify-panel">
             <p className="profile-new-section-label">Verify your account</p>
 
