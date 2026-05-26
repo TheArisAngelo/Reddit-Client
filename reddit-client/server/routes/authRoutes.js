@@ -21,9 +21,9 @@ const issueJWT = (user) =>
 // ─── POST /api/auth/signup ────────────────────────────────────────────────────
 router.post("/signup", async (req, res) => {
   try {
-    const { username, password, mobileNumber, country, place } = req.body;
+    const { username, email, password, mobileNumber, country, place } = req.body;
 
-    if (!username || !password || !mobileNumber || !country || !place) {
+    if (!username || !email || !password || !country || !place) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -32,10 +32,16 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "Username already exists" });
     }
 
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       username,
+      email,
       password: hashedPassword,
       mobileNumber,
       country,
