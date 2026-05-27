@@ -10,7 +10,7 @@ const crypto = require("crypto");
 
 const router = express.Router();
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// Helper
 const issueJWT = (user) =>
   jwt.sign(
     { userId: user._id, username: user.username },
@@ -18,7 +18,7 @@ const issueJWT = (user) =>
     { expiresIn: "7d" },
   );
 
-// ─── POST /api/auth/signup ────────────────────────────────────────────────────
+// POST - /api/auth/signup
 router.post("/signup", async (req, res) => {
   try {
     const { username, email, password, mobileNumber, country, place } =
@@ -64,7 +64,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/login ─────────────────────────────────────────────────────
+// POST - /api/auth/login
 router.post("/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
@@ -102,7 +102,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
+// GET - /api/auth/me
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
@@ -127,7 +127,7 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/reset-password ───────────────────────────────────────────
+// POST /api/auth/reset-password
 router.post("/reset-password", async (req, res) => {
   try {
     const { identifier, newPassword } = req.body;
@@ -164,7 +164,7 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/google (SIGN IN ONLY) ────────────────────────────────────
+// POST /api/auth/google (SIGN IN ONLY) 
 router.post("/google", async (req, res) => {
   const { firebaseToken } = req.body;
 
@@ -223,7 +223,7 @@ router.post("/google", async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/google/signup (SIGN UP ONLY) ─────────────────────────────
+// POST /api/auth/google/signup (SIGN UP ONLY)
 router.post("/google/signup", async (req, res) => {
   const { firebaseToken } = req.body;
 
@@ -280,7 +280,7 @@ router.post("/google/signup", async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/send-otp ──────────────────────────────────────────────────
+// POST /api/auth/send-otp
 router.post("/send-otp", authMiddleware, async (req, res) => {
   try {
     const { email } = req.body;
@@ -339,7 +339,7 @@ router.post("/send-otp", authMiddleware, async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/verify-otp ────────────────────────────────────────────────
+// POST /api/auth/verify-otp
 router.post("/verify-otp", authMiddleware, async (req, res) => {
   try {
     const { otp } = req.body;

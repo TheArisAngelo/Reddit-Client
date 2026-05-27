@@ -10,7 +10,7 @@ module.exports = async function (req, res, next) {
 
   const token = authHeader.split(" ")[1].trim();
 
-  // ─── Try your own JWT first ───────────────────────────────────────────────
+  // Own JWT Token
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
@@ -19,7 +19,7 @@ module.exports = async function (req, res, next) {
     // Not a valid JWT — try Firebase token next
   }
 
-  // ─── Try Firebase token ───────────────────────────────────────────────────
+  // Firebase token
   try {
     const decoded = await admin.auth().verifyIdToken(token);
     req.user = { id: decoded.uid, email: decoded.email };

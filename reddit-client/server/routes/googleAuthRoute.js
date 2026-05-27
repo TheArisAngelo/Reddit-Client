@@ -17,7 +17,7 @@ const safeUser = (user) => ({
   place: user.place || "",
 });
 
-// ─── POST /api/auth/google (SIGN IN ONLY) ────────────────────────────────────
+//  POST /api/auth/google (SIGN IN ONLY)
 // Fails if user doesn't exist — does NOT auto-create
 router.post("/google", async (req, res) => {
   const { firebaseToken } = req.body;
@@ -56,7 +56,7 @@ router.post("/google", async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/google/signup (SIGN UP ONLY) ─────────────────────────────
+//  POST /api/auth/google/signup (SIGN UP ONLY) 
 // Fails if user already exists — does NOT allow duplicates
 router.post("/google/signup", async (req, res) => {
   const { firebaseToken } = req.body;

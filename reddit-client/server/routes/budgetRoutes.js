@@ -7,7 +7,7 @@ const router = express.Router();
 
 const CACHE_KEY = "/api/budget";
 
-// ── Helper ────────────────────────────────────────────────────────────────────
+// Helper
 const userCacheKey = (req) => `${req.user.userId}:${CACHE_KEY}`;
 
 router.get("/", authMiddleware, cache, async (req, res) => {
