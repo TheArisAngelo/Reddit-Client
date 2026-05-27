@@ -11,7 +11,7 @@ const AUTH_STORAGE_KEY = "budget-tracker-auth";
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    identifier: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -28,11 +28,11 @@ export default function LoginPage({ onLogin }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const username = formData.username.trim();
+    const identifier = formData.identifier.trim();
     const password = formData.password.trim();
 
-    if (!username) {
-      setError("Please enter your username.");
+    if (!identifier) {
+      setError("Please enter your username or email.");
       return;
     }
 
@@ -46,7 +46,7 @@ export default function LoginPage({ onLogin }) {
 
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
-        { username, password },
+        { identifier, password },
       );
 
       const authData = {
@@ -141,17 +141,17 @@ export default function LoginPage({ onLogin }) {
           </button>
 
           <div className="login-divider">
-            <span>or sign in with username</span>
+            <span>or sign in with username or email</span>
           </div>
 
           <form className="create-form" onSubmit={handleSubmit}>
             <label className="create-field">
-              <span>Username</span>
+              <span>Username or Email</span>
               <input
                 type="text"
-                name="username"
-                placeholder="Enter your username"
-                value={formData.username}
+                name="identifier"
+                placeholder="Enter your username or email"
+                value={formData.identifier}
                 onChange={handleChange}
               />
             </label>

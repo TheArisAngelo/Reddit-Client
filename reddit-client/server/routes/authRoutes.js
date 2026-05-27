@@ -21,7 +21,8 @@ const issueJWT = (user) =>
 // ─── POST /api/auth/signup ────────────────────────────────────────────────────
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password, mobileNumber, country, place } = req.body;
+    const { username, email, password, mobileNumber, country, place } =
+      req.body;
 
     if (!username || !email || !password || !country || !place) {
       return res.status(400).json({ message: "All fields are required" });
@@ -66,9 +67,12 @@ router.post("/signup", async (req, res) => {
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { identifier, password } = req.body;
 
-    const user = await User.findOne({ username });
+    const isEmail = identifier.includes("@");
+    const user = await User.findOne(
+      isEmail ? { email: identifier } : { username: identifier },
+    );
     if (!user || !user.password) {
       return res.status(400).json({ message: "Invalid username or password" });
     }
