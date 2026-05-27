@@ -131,7 +131,7 @@ function ProtectedRoute({ isLoggedIn, children }) {
   return children;
 }
 
-// ── SideNav — always visible on desktop, hidden on mobile ──
+// SideNav always visible on desktop, hidden on mobile
 function SideNav({ auth, onLogout, transactions }) {
   if (!auth.isLoggedIn) return null;
 
@@ -478,7 +478,7 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
     return entries.reduce((max, curr) => (curr[1] > max[1] ? curr : max));
   }, [categoryTotals]);
 
-  // ── Guest view ──
+  // Guest view
   if (!auth.isLoggedIn) {
     return (
       <div className="app-shell budget-app">
@@ -528,9 +528,10 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
     );
   }
 
-  // ── Logged-in view ──
+  // Logged-in view
   return (
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
+      
       {/* Sidebar — always visible on desktop, hidden on mobile via CSS */}
       <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
 

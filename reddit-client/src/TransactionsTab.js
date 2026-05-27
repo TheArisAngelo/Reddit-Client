@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// Constants
 
 const CATEGORIES = [
   "Food",
@@ -28,13 +28,13 @@ const CATEGORY_ICONS = {
   Other: "📦",
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// Helpers
 
 function currency(amount) {
   return `₱${Math.round(Number(amount || 0))}`;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// Component
 
 export default function TransactionsTab({ transactions, onAddTransaction }) {
   const [formData, setFormData] = useState({
@@ -158,7 +158,7 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
     <section className="panel-card">
       <h2>Recent Transactions</h2>
 
-      {/* ── ADD FORM ── */}
+      {/* ADD FORM */}
       <form className="transaction-form" onSubmit={handleSubmit}>
         <div className="transaction-form-grid">
           <div className="transaction-field">
@@ -296,7 +296,7 @@ export default function TransactionsTab({ transactions, onAddTransaction }) {
         </select>
       </div>
 
-      {/* ── TRANSACTION LIST ── */}
+      {/* TRANSACTION LIST */}
       {filtered.length === 0 ? (
         <p className="empty-text">No transactions found.</p>
       ) : (

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// Helpers
 
 function currency(amount) {
   return `₱${Math.round(Number(amount || 0))}`;
@@ -26,7 +26,7 @@ const PERIOD_LABELS = {
   custom: "Custom",
 };
 
-// ── Alert Banner ───────────────────────────────────────────────────────────
+// Alert Banner
 
 function AlertBanner({ budgets }) {
   const alerts = useMemo(() => {
@@ -65,7 +65,7 @@ function AlertBanner({ budgets }) {
   );
 }
 
-// ── Budget Progress Card ───────────────────────────────────────────────────
+// Budget Progress Card
 
 function BudgetProgress({ budget, onDeposit }) {
   const { category, limit, targetDate, period } = budget;
@@ -107,14 +107,15 @@ function BudgetProgress({ budget, onDeposit }) {
 
   return (
     <div className={`budget-progress-item budget-progress-item--${status}`}>
-      {/* ── Completed banner ── */}
+
+      {/* Completed banner */}
       {isCompleted && (
         <div className="budget-completed-banner">
           🏆 Budget Completed! This budget is now locked.
         </div>
       )}
 
-      {/* ── Head row ── */}
+      {/* Head row */}
       <div className="budget-progress-head">
         <div className="budget-progress-head-left">
           <span className="budget-progress-category">{category}</span>
@@ -135,7 +136,7 @@ function BudgetProgress({ budget, onDeposit }) {
         </div>
       </div>
 
-      {/* ── Progress bar ── */}
+      {/* Progress bar */}
       <div className="budget-progress-bar">
         <div
           className="budget-progress-fill"
@@ -153,7 +154,7 @@ function BudgetProgress({ budget, onDeposit }) {
         />
       </div>
 
-      {/* ── Footer row ── */}
+      {/* Footer row */}
       <div className="budget-progress-footer">
         <span style={{ color: cfg.color, fontSize: "13px", fontWeight: 600 }}>
           {Math.round(rawPct)}% funded
@@ -193,7 +194,7 @@ function BudgetProgress({ budget, onDeposit }) {
         </div>
       )}
 
-      {/* ── Deposit form ── */}
+      {/* Deposit form */}
       {showDepositForm && !isCompleted && (
         <div className="budget-deposit-form">
           <div className="budget-deposit-inputs">
@@ -226,7 +227,7 @@ function BudgetProgress({ budget, onDeposit }) {
         </div>
       )}
 
-      {/* ── Deposit history ── */}
+      {/* Deposit history */}
       {(showHistory || isCompleted) && depositHistory.length > 0 && (
         <div className="budget-history">
           <p className="budget-history-title">
@@ -248,7 +249,7 @@ function BudgetProgress({ budget, onDeposit }) {
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────
+// Main Component
 
 export default function BudgetsTab({
   budgets,
@@ -309,7 +310,7 @@ export default function BudgetsTab({
     <section className="panel-card">
       <h2>Budget Overview</h2>
 
-      {/* ── Summary strip ── */}
+      {/* Summary strip */}
       {budgets.length > 0 && (
         <div className="budget-summary-strip">
           <div className="budget-summary-item">
@@ -355,10 +356,10 @@ export default function BudgetsTab({
         </div>
       )}
 
-      {/* ── Alert banners ── */}
+      {/* Alert banners */}
       <AlertBanner budgets={budgets} />
 
-      {/* ── Add budget form ── */}
+      {/* Add budget form */}
       <form className="transaction-form" onSubmit={handleSubmit}>
         <div className="transaction-form-grid">
           <div className="transaction-field">
@@ -415,7 +416,7 @@ export default function BudgetsTab({
         </button>
       </form>
 
-      {/* ── Budget list ── */}
+      {/* Budget list */}
       {budgets.length === 0 ? (
         <p className="empty-text">
           No budgets yet. Add one above to start tracking.

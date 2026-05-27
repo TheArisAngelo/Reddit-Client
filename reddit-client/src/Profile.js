@@ -27,7 +27,7 @@ function getToken() {
   return parsed?.token || null;
 }
 
-// ── Verification steps: "idle" | "enterEmail" | "enterOtp" | "done"
+// Verification steps: "idle" | "enterEmail" | "enterOtp" | "done"
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
@@ -132,7 +132,7 @@ export default function Profile() {
     setVerifyStep("enterEmail");
   };
 
-  // ── Render states
+  // Render states
   if (loading) {
     return (
       <main className="profile-new-layout">
@@ -170,6 +170,7 @@ export default function Profile() {
 
   return (
     <main className="profile-new-layout">
+
       {/* Page header */}
       <div className="profile-new-header">
         <p className="eyebrow">Profile</p>
@@ -177,6 +178,7 @@ export default function Profile() {
       </div>
 
       <div className="profile-new-card">
+
         {/* Avatar + name strip */}
         <div className="profile-new-hero">
           <div className="profile-new-avatar">{initials}</div>
@@ -266,7 +268,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ── Email Verification Panel (only for non-Google, unverified users) */}
+        {/* Email Verification Panel (only for non-Google, unverified users) */}
         {!isGoogleUser && !isVerified && !user?.email && verifyStep !== "done" && (
           <div className="profile-verify-panel">
             <p className="profile-new-section-label">Verify your account</p>
