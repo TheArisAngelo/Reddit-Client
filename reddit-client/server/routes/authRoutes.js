@@ -73,6 +73,7 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne(
       isEmail ? { email: identifier } : { username: identifier },
     );
+
     if (!user || !user.password) {
       return res.status(400).json({ message: "Invalid username or password" });
     }
@@ -129,18 +130,24 @@ router.get("/me", authMiddleware, async (req, res) => {
 // ─── POST /api/auth/reset-password ───────────────────────────────────────────
 router.post("/reset-password", async (req, res) => {
   try {
-    const { username, newPassword } = req.body;
+    const { identifier, newPassword } = req.body;
 
-    if (!username || !newPassword) {
+    if (!identifier || !newPassword) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const user = await User.findOne({ username });
+    const isEmail = identifier.includes("@");
+    const user = await User.findOne(
+      isEmail ? { email: identifier } : { username: identifier },
+    );
+
     if (!user) {
-      return res.status(404).json({ message: "Username not found." });
+      return res
+        .status(404)
+        .json({ message: "No account found with that username or email." });
     }
 
-    // FIX: Block password reset for Google-only accounts
+    // Block password reset for Google-only accounts
     if (user.firebaseUid && !user.password) {
       return res.status(400).json({
         message:
@@ -176,7 +183,7 @@ router.post("/google", async (req, res) => {
       user = await User.findOne({ email });
 
       if (user) {
-        // FIX: Only link if this is NOT a local-only (password) account
+        // Only link if this is NOT a local-only (password) account
         if (user.password) {
           return res.status(403).json({
             message:
@@ -273,7 +280,7 @@ router.post("/google/signup", async (req, res) => {
   }
 });
 
-// - POST /api/auth/send-otp
+// ─── POST /api/auth/send-otp ──────────────────────────────────────────────────
 router.post("/send-otp", authMiddleware, async (req, res) => {
   try {
     const { email } = req.body;
@@ -332,7 +339,7 @@ router.post("/send-otp", authMiddleware, async (req, res) => {
   }
 });
 
-// - POST /api/auth/verify-otp
+// ─── POST /api/auth/verify-otp ────────────────────────────────────────────────
 router.post("/verify-otp", authMiddleware, async (req, res) => {
   try {
     const { otp } = req.body;

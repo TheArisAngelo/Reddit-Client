@@ -8,7 +8,7 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: "",
+    identifier: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -33,17 +33,22 @@ export default function ForgotPassword() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const username = formData.username.trim();
+    const identifier = formData.identifier.trim();
     const newPassword = formData.newPassword.trim();
     const confirmPassword = formData.confirmPassword.trim();
 
-    if (!username) {
-      setError("Please enter your username.");
+    if (!identifier) {
+      setError("Please enter your username or email.");
       return;
     }
 
     if (!newPassword) {
       setError("Please enter a new password.");
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      setError("Password must be at least 4 characters.");
       return;
     }
 
@@ -59,7 +64,7 @@ export default function ForgotPassword() {
 
     try {
       await axios.post("http://localhost:5000/api/auth/reset-password", {
-        username,
+        identifier,
         newPassword,
       });
 
@@ -93,12 +98,12 @@ export default function ForgotPassword() {
 
             <form className="create-form" onSubmit={handleSubmit}>
               <label className="create-field">
-                <span>Username</span>
+                <span>Username or Email</span>
                 <input
                   type="text"
-                  name="username"
-                  placeholder="Enter your username"
-                  value={formData.username}
+                  name="identifier"
+                  placeholder="Enter your username or email"
+                  value={formData.identifier}
                   onChange={handleChange}
                 />
               </label>
