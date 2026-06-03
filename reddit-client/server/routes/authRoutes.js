@@ -141,21 +141,32 @@ router.post("/reset-password", async (req, res) => {
       isEmail ? { email: identifier } : { username: identifier },
     );
 
-    if (!user) {
+    if (!user)
       return res
         .status(404)
         .json({ message: "No account found with that username or email." });
+    if (user.firebaseUid && !user.password) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "This account uses Google sign in and has no password to reset.",
+        });
     }
 
-    // Block password reset for Google-only accounts
-    if (user.firebaseUid && !user.password) {
-      return res.status(400).json({
-        message:
-          "This account uses Google sign-in and has no password to reset.",
-      });
+    // Block if OTP wasn't verified
+    if (!user.otpVerified) {
+      return res
+        .status(403)
+        .json({
+          message: "OTP not verified. Please complete verification first.",
+        });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
+    user.emailOtp = "";
+    user.otpExpiry = null;
+    user.otpVerified = false;
     await user.save();
 
     res.json({ message: "Password reset successful." });
@@ -164,7 +175,7 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// POST /api/auth/google (SIGN IN ONLY) 
+// POST /api/auth/google (SIGN IN ONLY)
 router.post("/google", async (req, res) => {
   const { firebaseToken } = req.body;
 
@@ -377,6 +388,106 @@ router.post("/verify-otp", authMiddleware, async (req, res) => {
     res.json({ message: "Email verified successfully!" });
   } catch (error) {
     console.error("verify OTP error:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+// POST /api/auth/forgot/send-otp
+router.post("/forgot/send-otp", async (req, res) => {
+  try {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+      return res
+        .status(400)
+        .json({ message: "Please provide a username or email." });
+    }
+
+    const isEmail = identifier.includes("@");
+    const user = await User.findOne(
+      isEmail ? { email: identifier } : { username: identifier },
+    );
+
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "No account found with that username or email." });
+    if (!user.email)
+      return res
+        .status(400)
+        .json({ message: "No email linked with this account." });
+
+    // Block Google only accounts
+    if (user.firebaseUid && !user.password) {
+      return res
+        .status(400)
+        .json({
+          message: "This account uses Google sign in and no password to reset.",
+        });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.emailOtp = otp;
+    user.otpExpiry = expiry;
+    user.otpVerified = false;
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"SpendWise" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Your SpenWise Password Reset Code",
+      html: `
+        <div style="font-family: sans-serif; max-width: 400px; margin: auto;">
+          <h2>Reset your password</h2>
+          <p>Your one-time reset code is:</p>
+          <h1 style="letter-spacing: 8px; color: #6c47ff;">${otp}</h1>
+          <p>This code expires in <strong>10 minutes</strong>.</p>
+          <p style="color: #888;">If you didn't request this, ignore this email.</p>
+        </div>
+      `,
+    });
+
+    res.json({ message: "OTP sent to your email." });
+  } catch (error) {
+    console.error("Forgot send-otp error:", error);
+    res.status(500).json({ message: "Failed to send OTP." });
+  }
+});
+
+// POST /api/auth/forgot/verify-otp
+router.post("/forgot.verify-otp", async (req, res) => {
+  try {
+    const { identifier, otp } = req.body;
+
+    const isEmail = identifier.includes("@");
+    const user = await User.findOne(
+      isEmail ? { email: identifier } : { username: identifier },
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user.emailOtp || !user.otpExpiry)
+      return res.status(400).json({ message: "No OTP requested." });
+    if (new Date() > user.otpExpiry)
+      return res.status(400).json({ message: "OTP has expired." });
+    if (user.emailOtp !== otp)
+      return res.status(400).json({ message: "Incorrect OTP." });
+
+    user.otpVerified = true;
+    await user.save();
+
+    res.json({ message: "OTP verified." });
+  } catch (error) {
+    console.error("Forgot verify-otp error:", error);
     res.status(500).json({ message: "Server error." });
   }
 });

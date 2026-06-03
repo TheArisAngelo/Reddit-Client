@@ -6,117 +6,210 @@ import { FaLock, FaLockOpen } from "react-icons/fa";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
 
-  const [formData, setFormData] = useState({
-    identifier: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const [identifier, setIdentifier] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
-
-    if (error) setError("");
-    if (success) setSuccess("");
+  const clearMessages = () => {
+    setError("");
+    setSuccess("");
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  // Step 1 — Send OTP
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    clearMessages();
 
-    const identifier = formData.identifier.trim();
-    const newPassword = formData.newPassword.trim();
-    const confirmPassword = formData.confirmPassword.trim();
-
-    if (!identifier) {
-      setError("Please enter your username or email.");
-      return;
+    if (!identifier.trim()) {
+      return setError("Please enter your username or email.");
     }
 
-    if (!newPassword) {
-      setError("Please enter a new password.");
-      return;
+    setLoading(true);
+    try {
+      await axios.post("http://localhost:5000/api/auth/forgot/send-otp", {
+        identifier,
+      });
+      setSuccess("OTP sent! Check your email.");
+      setStep(2);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to send OTP.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (newPassword.length < 4) {
-      setError("Password must be at least 4 characters.");
-      return;
+  // Step 2 — Verify OTP
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    clearMessages();
+
+    if (!otp.trim()) return setError("Please enter the OTP.");
+    if (otp.length !== 6) return setError("OTP must be 6 digits.");
+
+    setLoading(true);
+    try {
+      await axios.post("http://localhost:5000/api/auth/forgot/verify-otp", {
+        identifier,
+        otp,
+      });
+      setSuccess("OTP verified! Set your new password.");
+      setStep(3);
+    } catch (err) {
+      setError(err.response?.data?.message || "Invalid or expired OTP.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (!confirmPassword) {
-      setError("Please confirm your new password.");
-      return;
-    }
+  // Step 3 — Reset Password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    clearMessages();
 
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!newPassword) return setError("Please enter a new password.");
+    if (newPassword.length < 4)
+      return setError("Password must be at least 4 characters.");
+    if (!confirmPassword) return setError("Please confirm your new password.");
+    if (newPassword !== confirmPassword)
+      return setError("Passwords do not match.");
 
+    setLoading(true);
     try {
       await axios.post("http://localhost:5000/api/auth/reset-password", {
         identifier,
         newPassword,
       });
-
       setSuccess("Password reset successful. Redirecting to login...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setError(
         err.response?.data?.message || "Reset failed. Please try again.",
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <div className="app-shell--auth">
-        <div className="bg-orb bg-orb-1" />
-        <div className="bg-orb bg-orb-2" />
-        <div className="bg-grid" />
+    <div className="app-shell--auth">
+      <div className="bg-orb bg-orb-1" />
+      <div className="bg-orb bg-orb-2" />
+      <div className="bg-grid" />
 
-        <main className="login-layout">
-          <div className="auth-page-header">
-            <p className="eyebrow">Reset Password</p>
-            <h1 className="create-page-title">Create a new password</h1>
+      <main className="login-layout">
+        <div className="auth-page-header">
+          <p className="eyebrow">Reset Password</p>
+          <h1 className="create-page-title">
+            {step === 1 && "Find your account"}
+            {step === 2 && "Enter your OTP"}
+            {step === 3 && "Create a new password"}
+          </h1>
+          <Link to="/login" className="nav-btn auth-home-btn">
+            Back to Login
+          </Link>
+        </div>
 
-            <Link to="/login" className="nav-btn auth-home-btn">
-              Back to Login
-            </Link>
+        <section className="create-card login-card">
+          <div className="lane-chip">
+            {step === 1 && "Step 1 of 3 — Identify Account"}
+            {step === 2 && "Step 2 of 3 — Verify OTP"}
+            {step === 3 && "Step 3 of 3 — New Password"}
           </div>
-          <section className="create-card login-card">
-            <div className="lane-chip">Forgot Password</div>
 
-            <form className="create-form" onSubmit={handleSubmit}>
+          {/* Step 1 — Identifier */}
+          {step === 1 && (
+            <form className="create-form" onSubmit={handleSendOtp}>
               <label className="create-field">
                 <span>Username or Email</span>
                 <input
                   type="text"
-                  name="identifier"
                   placeholder="Enter your username or email"
-                  value={formData.identifier}
-                  onChange={handleChange}
+                  value={identifier}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    clearMessages();
+                  }}
                 />
               </label>
 
+              {error && <div className="lane-error">{error}</div>}
+              {success && <div className="lane-chip">{success}</div>}
+
+              <button
+                type="submit"
+                className="create-submit-btn"
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send OTP"}
+              </button>
+            </form>
+          )}
+
+          {/* Step 2 — OTP */}
+          {step === 2 && (
+            <form className="create-form" onSubmit={handleVerifyOtp}>
+              <label className="create-field">
+                <span>6-Digit OTP</span>
+                <input
+                  type="text"
+                  placeholder="Enter the OTP sent to your email"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    clearMessages();
+                  }}
+                />
+              </label>
+
+              {error && <div className="lane-error">{error}</div>}
+              {success && <div className="lane-chip">{success}</div>}
+
+              <button
+                type="submit"
+                className="create-submit-btn"
+                disabled={loading}
+              >
+                {loading ? "Verifying..." : "Verify OTP"}
+              </button>
+
+              <button
+                type="button"
+                className="nav-btn auth-home-btn"
+                style={{ marginTop: "8px" }}
+                onClick={() => {
+                  clearMessages();
+                  setStep(1);
+                }}
+              >
+                ← Back
+              </button>
+            </form>
+          )}
+
+          {/* Step 3 — New Password */}
+          {step === 3 && (
+            <form className="create-form" onSubmit={handleResetPassword}>
               <label className="create-field">
                 <span>New Password</span>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showNewPassword ? "text" : "password"}
-                    name="newPassword"
                     placeholder="Enter new password"
-                    value={formData.newPassword}
-                    onChange={handleChange}
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      clearMessages();
+                    }}
                     style={{ width: "100%", paddingRight: "40px" }}
                   />
                   <button
@@ -131,7 +224,6 @@ export default function ForgotPassword() {
                       border: "none",
                       cursor: "pointer",
                       padding: 0,
-                      color: "#888",
                       fontSize: "18px",
                       lineHeight: 1,
                     }}
@@ -153,10 +245,12 @@ export default function ForgotPassword() {
                 <div style={{ position: "relative" }}>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
                     placeholder="Confirm new password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      clearMessages();
+                    }}
                     style={{ width: "100%", paddingRight: "40px" }}
                   />
                   <button
@@ -171,7 +265,6 @@ export default function ForgotPassword() {
                       border: "none",
                       cursor: "pointer",
                       padding: 0,
-                      color: "#888",
                       fontSize: "18px",
                       lineHeight: 1,
                     }}
@@ -188,16 +281,20 @@ export default function ForgotPassword() {
                 </div>
               </label>
 
-              {error ? <div className="lane-error">{error}</div> : null}
-              {success ? <div className="lane-chip">{success}</div> : null}
+              {error && <div className="lane-error">{error}</div>}
+              {success && <div className="lane-chip">{success}</div>}
 
-              <button type="submit" className="create-submit-btn">
-                Reset Password
+              <button
+                type="submit"
+                className="create-submit-btn"
+                disabled={loading}
+              >
+                {loading ? "Resetting..." : "Reset Password"}
               </button>
             </form>
-          </section>
-        </main>
-      </div>
-    </>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
