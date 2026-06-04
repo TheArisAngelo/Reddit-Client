@@ -37,12 +37,20 @@ export default function AppHeader({
           gap: 12px;
           padding: 10px 20px;
           margin-bottom: 28px;
-          background: var(--panel);
-          border: 1px solid var(--border);
+          background: rgba(15, 23, 42, 0.42);
+          border: 1px solid rgba(148, 163, 184, 0.18);
           border-radius: 18px;
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          backdrop-filter: blur(20px) saturate(160%);
+          -webkit-backdrop-filter: blur(20px) saturate(160%);
+          box-shadow: 0 8px 32px rgba(2, 6, 23, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.07);
           flex-wrap: wrap;
+        }
+        .light-mode .sw-header {
+            background: rgba(255, 255, 255, 0.58);
+            border-color: rgba(255, 255, 255, 0.75);
+            box-shadow: 0 8px 32px rgba(100, 116, 139, 0.13),
+              inset 0 1px 0 rgba(255, 255, 255, 0.95);
         }
 
         .sw-logo {

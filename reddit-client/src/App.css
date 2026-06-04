@@ -4160,6 +4160,157 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   GLASSMORPHISM LAYER
+========================= */
+
+/* Shared glass mixin' values */
+:root {
+  --glass-bg-dark:   rgba(15, 23, 42, 0.45);
+  --glass-bg-light:  rgba(255, 255, 255, 0.55);
+  --glass-blur:      blur(18px);
+  --glass-border-dark:  rgba(148, 163, 184, 0.18);
+  --glass-border-light: rgba(255, 255, 255, 0.7);
+  --glass-shadow-dark:  0 8px 32px rgba(2, 6, 23, 0.35);
+  --glass-shadow-light: 0 8px 32px rgba(100, 116, 139, 0.15);
+}
+
+/* Summary cards */
+.summary-card {
+  background: var(--glass-bg-dark) !important;
+  backdrop-filter: var(--glass-blur) saturate(160%) !important;
+  -webkit-backdrop-filter: var(--glass-blur) saturate(160%) !important;
+  border: 1px solid var(--glass-border-dark) !important;
+  box-shadow: var(--glass-shadow-dark), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+
+/* Panel cards (Insights / Charts inner cards) */
+.panel-card {
+  background: var(--glass-bg-dark) !important;
+  backdrop-filter: var(--glass-blur) saturate(160%) !important;
+  -webkit-backdrop-filter: var(--glass-blur) saturate(160%) !important;
+  border: 1px solid var(--glass-border-dark) !important;
+  box-shadow: var(--glass-shadow-dark), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+/* Side nav */
+.side-nav {
+  background: rgba(8, 15, 28, 0.55) !important;
+  backdrop-filter: var(--glass-blur) saturate(140%) !important;
+  -webkit-backdrop-filter: var(--glass-blur) saturate(140%) !important;
+  border-right: 1px solid var(--glass-border-dark) !important;
+  box-shadow: 2px 0 24px rgba(2, 6, 23, 0.2) !important;
+}
+
+/* Transaction rows */
+.transaction-row,
+.savings-goal-card,
+.budget-progress-item,
+.subs-row,
+.post-card {
+  background: rgba(15, 23, 42, 0.38) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-color: var(--glass-border-dark) !important;
+}
+
+/* Transaction form */
+.transaction-form,
+.budget-deposit-form,
+.budget-history,
+.add-goal-form {
+  background: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Chart cards */
+.chart-card {
+  background: rgba(15, 23, 42, 0.38) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-color: var(--glass-border-dark) !important;
+}
+
+/* Notification dropdown */
+.notif-dropdown {
+  background: rgba(10, 18, 36, 0.72) !important;
+  backdrop-filter: var(--glass-blur) saturate(160%) !important;
+  -webkit-backdrop-filter: var(--glass-blur) saturate(160%) !important;
+  border-color: var(--glass-border-dark) !important;
+}
+
+/* Tab nav buttons */
+.tab-nav button {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-color: var(--glass-border-dark) !important;
+}
+
+.tab-nav button:hover {
+  background: rgba(30, 41, 59, 0.60) !important;
+}
+
+
+/* =========================
+   LIGHT MODE — Glass overrides
+========================= */
+
+.light-mode .summary-card {
+  background: var(--glass-bg-light) !important;
+  border-color: var(--glass-border-light) !important;
+  box-shadow: var(--glass-shadow-light), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+
+.light-mode .panel-card {
+  background: var(--glass-bg-light) !important;
+  border-color: var(--glass-border-light) !important;
+  box-shadow: var(--glass-shadow-light), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+
+.light-mode .side-nav {
+  background: rgba(255, 255, 255, 0.60) !important;
+  border-right-color: rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 2px 0 24px rgba(100, 116, 139, 0.12) !important;
+}
+
+.light-mode .transaction-row,
+.light-mode .savings-goal-card,
+.light-mode .budget-progress-item,
+.light-mode .subs-row,
+.light-mode .post-card {
+  background: rgba(255, 255, 255, 0.50) !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.light-mode .transaction-form,
+.light-mode .budget-deposit-form,
+.light-mode .budget-history,
+.light-mode .add-goal-form {
+  background: rgba(255, 255, 255, 0.45) !important;
+}
+
+.light-mode .chart-card {
+  background: rgba(255, 255, 255, 0.50) !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.light-mode .notif-dropdown {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 16px 48px rgba(100, 116, 139, 0.18) !important;
+}
+
+.light-mode .tab-nav button {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.light-mode .tab-nav button:hover {
+  background: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 
