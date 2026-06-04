@@ -4393,6 +4393,53 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   SPENDING PERSONALITY BADGE
+========================= */
+
+.profile-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid;
+  transition: transform 0.18s ease;
+}
+
+.profile-badge-card:hover {
+  transform: translateY(-2px);
+}
+
+.profile-badge-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-badge-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-badge-label {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.profile-badge-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 

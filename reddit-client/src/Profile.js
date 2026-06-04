@@ -5,7 +5,12 @@ import {
   FiDollarSign,
   FiBarChart2,
   FiTarget,
+  FiZap,
+  FiFlame,
+  FiAward,
+  FiMoon,
 } from "react-icons/fi";
+
 import axios from "axios";
 import "./App.css";
 
@@ -34,6 +39,25 @@ function getToken() {
   return parsed?.token || null;
 }
 
+function BadgeIcon({ type, size, color }) {
+  switch (type) {
+    case "award":
+      return <FiAward size={size} color={color} />;
+    case "flame":
+      return <FiTrendingDown size={size} color={color} />;
+    case "zap":
+      return <FiZap size={size} color={color} />;
+    case "target":
+      return <FiTarget size={size} color={color} />;
+    case "trending":
+      return <FiTrendingDown size={size} color={color} />;
+    case "moon":
+      return <FiMoon size={size} color={color} />;
+    default:
+      return <FiZap size={size} color={color} />;
+  }
+}
+
 // Verification steps: "idle" | "enterEmail" | "enterOtp" | "done"
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -50,6 +74,7 @@ export default function Profile() {
   const [countdown, setCountdown] = useState(0);
 
   const [budgetSummary, setBudgetSummary] = useState(null);
+  const [spendingBadge, setSpendingBadge] = useState(null);
 
   useEffect(() => {
     fetchProfile();
@@ -122,9 +147,119 @@ export default function Profile() {
         activeBudgets,
         completedGoals,
       });
+      const badge = computeSpendingBadge(transactions, budgets, savingsGoals);
+      setSpendingBadge(badge);
     } catch (err) {
       console.error("Failed to load budget summary", err);
     }
+  };
+
+  const computeSpendingBadge = (transactions, budgets, savingsGoals) => {
+    const now = new Date();
+
+    const thisMonthTransactions = transactions.filter((t) => {
+      const d = new Date(t.date);
+      return (
+        d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      );
+    });
+
+    const monthlyIncome = thisMonthTransactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const monthlyExpenses = thisMonthTransactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => t.amount, 0);
+
+    const spendingRate =
+      monthlyIncome > 0 ? (monthlyExpenses / monthlyIncome) * 100 : 0;
+
+    const hasTransactions = transactions.length > 0;
+    const hasBudgets = budgets.length > 0;
+    const hasGoals = savingsGoals.length > 0;
+    const completedGoals = savingsGoals.filter(
+      (g) => g.saved >= g.target,
+    ).length;
+
+    if (!hasTransactions) {
+      return {
+        label: "Getting Started",
+        description: "Add your first transaction to get started.",
+        color: "#94a3b8",
+        bg: "rgba(148, 163, 184, 0.12)",
+        border: "rgba(148, 163, 184, 0.25)",
+        icon: "moon",
+      };
+    }
+    if (completedGoals > 0) {
+      return {
+        label: "Goal Crusher",
+        description: `You've completed ${completedGoals} savings goal${completedGoals > 1 ? "s" : ""}. Outstanding!`,
+        color: "#fbbf24",
+        bg: "rgba(251, 191, 36, 0.12)",
+        border: "rgba(251, 191, 36, 0.25)",
+        icon: "award",
+      };
+    }
+
+    if (spendingRate >= 80) {
+      return {
+        label: "High Spender",
+        description:
+          "Your expenses are consuming most of your income this month.",
+        color: "#fb7185",
+        bg: "rgba(251, 113, 133, 0.12)",
+        border: "rgba(251, 113, 133, 0.25)",
+        icon: "flame",
+      };
+    }
+
+    if (hasBudgets && hasGoals && spendingRate < 50) {
+      return {
+        label: "On Track",
+        description:
+          "You have budgets, savings goals, and healthy spending. Keep it up!",
+        color: "#60a5fa",
+        bg: "rgba(96, 165, 250, 0.12)",
+        border: "rgba(96, 165, 250, 0.25)",
+        icon: "zap",
+      };
+    }
+
+    if (hasBudgets && spendingRate < 80) {
+      return {
+        label: "Budget Conscious",
+        description: "You're managing your budgets well this month.",
+        color: "#c084fc",
+        bg: "rgba(192, 132, 252, 0.12)",
+        border: "rgba(192, 132, 252, 0.25)",
+        icon: "target",
+      };
+    }
+
+    if (hasGoals && spendingRate < 50) {
+      return {
+        label: "Smart Saver",
+        description:
+          "You're spending wisely and working toward your savings goals.",
+        color: "#34d399",
+        bg: "rgba(52, 211, 153, 0.12)",
+        border: "rgba(52, 211, 153, 0.25)",
+        icon: "trending",
+      };
+    }
+
+    // Fallback
+    return {
+      label: "Getting Started",
+      description:
+        "Set up budgets and savings goals to unlock your spending personality.",
+      color: "#94a3b8",
+      bg: "rgba(148, 163, 184, 0.12)",
+      border: "rgba(148, 163, 184, 0.25)",
+      icon: "moon",
+    };
   };
 
   const handleSendOtp = async () => {
@@ -306,6 +441,45 @@ export default function Profile() {
               >
                 {budgetSummary.completedGoals}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Spending Personality Badge */}
+        {spendingBadge && (
+          <div className="profile-new-section">
+            <p className="profile-new-section-label">Spending Personality</p>
+            <div
+              className="profile-badge-card"
+              style={{
+                background: spendingBadge.bg,
+                borderColor: spendingBadge.border,
+              }}
+            >
+              <div
+                className="profile-badge-icon"
+                style={{
+                  background: spendingBadge.bg,
+                  borderColor: spendingBadge.border,
+                }}
+              >
+                <BadgeIcon
+                  type={spendingBadge.icon}
+                  size={24}
+                  color={spendingBadge.color}
+                />
+              </div>
+              <div className="profile-badge-info">
+                <span
+                  className="profile-badge-label"
+                  style={{ color: spendingBadge.color }}
+                >
+                  {spendingBadge.label}
+                </span>
+                <span className="profile-badge-desc">
+                  {spendingBadge.description}
+                </span>
+              </div>
             </div>
           </div>
         )}
