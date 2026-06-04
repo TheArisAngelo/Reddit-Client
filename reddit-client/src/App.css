@@ -4348,8 +4348,13 @@ body:has(.light-mode) {
 }
 
 .profile-summary-icon {
-  font-size: 22px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .profile-summary-label {

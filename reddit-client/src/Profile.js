@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  FiTrendingDown,
+  FiDollarSign,
+  FiBarChart2,
+  FiTarget,
+} from "react-icons/fi";
 import axios from "axios";
 import "./App.css";
 
@@ -250,7 +256,9 @@ export default function Profile() {
         {budgetSummary && (
           <div className="profile-summary-strip">
             <div className="profile-summary-item">
-              <span className="profile-summary-icon">💸</span>
+              <span className="profile-summary-icon">
+                <FiTrendingDown size={22} color="#fb7185" />
+              </span>
               <span className="profile-summary-label">Spent this month</span>
               <span
                 className="profile-summary-value"
@@ -260,7 +268,10 @@ export default function Profile() {
               </span>
             </div>
             <div className="profile-summary-item">
-              <span className="profile-summary-icon">🐷</span>
+              <span className="profile-summary-icon">
+                <FiDollarSign size={22} color="#34d399" />
+              </span>
+
               <span className="profile-summary-label">Saved Toward Goals</span>
               <span
                 className="profile-summary-value"
@@ -270,7 +281,9 @@ export default function Profile() {
               </span>
             </div>
             <div className="profile-summary-item">
-              <span className="profile-summary-icon">📊</span>
+              <span className="profile-summary-icon">
+                <FiBarChart2 size={22} color="#818cf8" />
+              </span>
               <span className="profile-summary-label">Active Budgets</span>
               <span
                 className="profile-summary-value"
@@ -280,7 +293,9 @@ export default function Profile() {
               </span>
             </div>
             <div className="profile-summary-item">
-              <span className="profile-summary-icon">🎯</span>
+              <span className="profile-summary-icon">
+                <FiTarget size={22} color="#c084fc" />
+              </span>
               <span className="profile-summary-label">
                 {" "}
                 Savings Goals Completed
