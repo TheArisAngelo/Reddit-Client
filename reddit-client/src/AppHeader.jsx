@@ -10,6 +10,7 @@ import {
   BarChart2,
 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
+import { Link } from "react-router-dom";
 
 const TABS = [
   { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -121,6 +122,13 @@ export default function AppHeader({
           border-radius: 999px;
           background: rgba(148, 163, 184, 0.1);
           border: 1px solid var(--border);
+          cursor: pointer;
+          transition: background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .sw-user-chip:hover {
+          background: rgba(124, 58, 237, 0.15);
+          border-color: rgba(124, 58, 237, 0.35);
         }
 
         .sw-avatar {
@@ -265,15 +273,17 @@ export default function AppHeader({
 
         <div className="sw-controls">
           <NotificationBell token={auth.token} />
-          <div
+          <Link
+            to="/profile"
             className="sw-user-chip"
             aria-label={`Logged in as ${auth.username}`}
+            style={{ textDecoration: "none" }}
           >
             <div className="sw-avatar" aria-hidden="true">
               {auth.username ? auth.username.slice(0, 2) : "?"}
             </div>
             <span className="sw-username">{auth.username}</span>
-          </div>
+          </Link>
           <button
             className="sw-theme-btn"
             onClick={onToggleDark}
