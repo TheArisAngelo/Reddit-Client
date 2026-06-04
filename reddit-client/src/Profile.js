@@ -5,6 +5,7 @@ import "./App.css";
 
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 const API = "http://localhost:5000/api/auth";
+const BUDGET_API = "http://localhost:5000/api/budget";
 
 function getInitials(username) {
   if (!username) return "?";
@@ -42,8 +43,11 @@ export default function Profile() {
   const [verifySuccess, setVerifySuccess] = useState("");
   const [countdown, setCountdown] = useState(0);
 
+  const [budgetSummary, setBudgetSummary] = useState(null);
+
   useEffect(() => {
     fetchProfile();
+    fetchBudgetSummary();
   }, []);
 
   // Countdown timer for resend
@@ -72,6 +76,48 @@ export default function Profile() {
       setError(err.response?.data?.message || "Failed to load user profile.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBudgetSummary = async () => {
+    try {
+      const token = getToken();
+      if (!token) return;
+      const res = await axios.get(BUDGET_API, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { transactions = [], budgets = [], savingsGoals = [] } = res.data;
+
+      const now = new Date();
+      const thisMonth = transactions.filter((t) => {
+        const d = new Date(t.date);
+        return (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      });
+
+      const totalSpentThisMonth = thisMonth
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const totalSaved = savingsGoals.reduce(
+        (sum, g) => sum + (g.saved || 0),
+        0,
+      );
+      const activeBudgets = budgets.length;
+      const completedGoals = savingsGoals.filter(
+        (g) => g.saved >= g.target,
+      ).length;
+
+      setBudgetSummary({
+        totalSpentThisMonth,
+        totalSaved,
+        activeBudgets,
+        completedGoals,
+      });
+    } catch (err) {
+      console.error("Failed to load budget summary", err);
     }
   };
 
@@ -170,7 +216,6 @@ export default function Profile() {
 
   return (
     <main className="profile-new-layout">
-
       {/* Page header */}
       <div className="profile-new-header">
         <p className="eyebrow">Profile</p>
@@ -178,7 +223,6 @@ export default function Profile() {
       </div>
 
       <div className="profile-new-card">
-
         {/* Avatar + name strip */}
         <div className="profile-new-hero">
           <div className="profile-new-avatar">{initials}</div>
@@ -201,6 +245,55 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {/* Financial Summary Strip */}
+        {budgetSummary && (
+          <div className="profile-summary-strip">
+            <div className="profile-summary-item">
+              <span className="profile-summary-icon">💸</span>
+              <span className="profile-summary-label">Spent this month</span>
+              <span
+                className="profile-summary-value"
+                style={{ color: "#fb7185" }}
+              >
+                ₱{budgetSummary.totalSpentThisMonth.toLocaleString()}
+              </span>
+            </div>
+            <div className="profile-summary-item">
+              <span className="profile-summary-icon">🐷</span>
+              <span className="profile-summary-label">Saved Toward Goals</span>
+              <span
+                className="profile-summary-value"
+                style={{ color: "#34d399" }}
+              >
+                ₱{budgetSummary.totalSaved.toLocaleString()}
+              </span>
+            </div>
+            <div className="profile-summary-item">
+              <span className="profile-summary-icon">📊</span>
+              <span className="profile-summary-label">Active Budgets</span>
+              <span
+                className="profile-summary-value"
+                style={{ color: "#818cf8" }}
+              >
+                {budgetSummary.activeBudgets}
+              </span>
+            </div>
+            <div className="profile-summary-item">
+              <span className="profile-summary-icon">🎯</span>
+              <span className="profile-summary-label">
+                {" "}
+                Savings Goals Completed
+              </span>
+              <span
+                className="profile-summary-value"
+                style={{ color: "#c084fc" }}
+              >
+                {budgetSummary.completedGoals}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Basic info section */}
         <div className="profile-new-section">
@@ -269,103 +362,107 @@ export default function Profile() {
         </div>
 
         {/* Email Verification Panel (only for non-Google, unverified users) */}
-        {!isGoogleUser && !isVerified && !user?.email && verifyStep !== "done" && (
-          <div className="profile-verify-panel">
-            <p className="profile-new-section-label">Verify your account</p>
+        {!isGoogleUser &&
+          !isVerified &&
+          !user?.email &&
+          verifyStep !== "done" && (
+            <div className="profile-verify-panel">
+              <p className="profile-new-section-label">Verify your account</p>
 
-            {verifyStep === "idle" && (
-              <>
-                <p className="profile-verify-desc">
-                  Verify your email address to confirm your identity and unlock
-                  the Verified badge.
-                </p>
-                <button
-                  className="profile-verify-btn"
-                  onClick={() => setVerifyStep("enterEmail")}
-                >
-                  Verify email
-                </button>
-              </>
-            )}
-
-            {verifyStep === "enterEmail" && (
-              <>
-                <p className="profile-verify-desc">
-                  Enter the email address you'd like to verify.
-                </p>
-                <div className="profile-verify-row">
-                  <input
-                    type="email"
-                    className="profile-verify-input"
-                    placeholder="you@example.com"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
-                  />
+              {verifyStep === "idle" && (
+                <>
+                  <p className="profile-verify-desc">
+                    Verify your email address to confirm your identity and
+                    unlock the Verified badge.
+                  </p>
                   <button
                     className="profile-verify-btn"
-                    onClick={handleSendOtp}
-                    disabled={verifyLoading}
+                    onClick={() => setVerifyStep("enterEmail")}
                   >
-                    {verifyLoading ? "Sending…" : "Send code"}
+                    Verify email
                   </button>
-                </div>
-                {verifyError && (
-                  <p className="profile-verify-error">{verifyError}</p>
-                )}
-              </>
-            )}
+                </>
+              )}
 
-            {verifyStep === "enterOtp" && (
-              <>
-                {verifySuccess && (
-                  <p className="profile-verify-success">{verifySuccess}</p>
-                )}
-                <p className="profile-verify-desc">
-                  Enter the 6-digit code sent to <strong>{emailInput}</strong>.
-                </p>
-                <div className="profile-verify-row">
-                  <input
-                    type="text"
-                    className="profile-verify-input profile-verify-input--otp"
-                    placeholder="_ _ _ _ _ _"
-                    maxLength={6}
-                    value={otpInput}
-                    onChange={(e) =>
-                      setOtpInput(e.target.value.replace(/\D/g, ""))
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
-                  />
-                  <button
-                    className="profile-verify-btn"
-                    onClick={handleVerifyOtp}
-                    disabled={verifyLoading}
-                  >
-                    {verifyLoading ? "Verifying…" : "Verify"}
-                  </button>
-                </div>
-                {verifyError && (
-                  <p className="profile-verify-error">{verifyError}</p>
-                )}
-                <p className="profile-verify-resend">
-                  {countdown > 0 ? (
-                    <>Resend available in {countdown}s</>
-                  ) : (
-                    <>
-                      Didn't get it?{" "}
-                      <button
-                        className="profile-verify-link"
-                        onClick={handleResend}
-                      >
-                        Resend code
-                      </button>
-                    </>
+              {verifyStep === "enterEmail" && (
+                <>
+                  <p className="profile-verify-desc">
+                    Enter the email address you'd like to verify.
+                  </p>
+                  <div className="profile-verify-row">
+                    <input
+                      type="email"
+                      className="profile-verify-input"
+                      placeholder="you@example.com"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
+                    />
+                    <button
+                      className="profile-verify-btn"
+                      onClick={handleSendOtp}
+                      disabled={verifyLoading}
+                    >
+                      {verifyLoading ? "Sending…" : "Send code"}
+                    </button>
+                  </div>
+                  {verifyError && (
+                    <p className="profile-verify-error">{verifyError}</p>
                   )}
-                </p>
-              </>
-            )}
-          </div>
-        )}
+                </>
+              )}
+
+              {verifyStep === "enterOtp" && (
+                <>
+                  {verifySuccess && (
+                    <p className="profile-verify-success">{verifySuccess}</p>
+                  )}
+                  <p className="profile-verify-desc">
+                    Enter the 6-digit code sent to <strong>{emailInput}</strong>
+                    .
+                  </p>
+                  <div className="profile-verify-row">
+                    <input
+                      type="text"
+                      className="profile-verify-input profile-verify-input--otp"
+                      placeholder="_ _ _ _ _ _"
+                      maxLength={6}
+                      value={otpInput}
+                      onChange={(e) =>
+                        setOtpInput(e.target.value.replace(/\D/g, ""))
+                      }
+                      onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
+                    />
+                    <button
+                      className="profile-verify-btn"
+                      onClick={handleVerifyOtp}
+                      disabled={verifyLoading}
+                    >
+                      {verifyLoading ? "Verifying…" : "Verify"}
+                    </button>
+                  </div>
+                  {verifyError && (
+                    <p className="profile-verify-error">{verifyError}</p>
+                  )}
+                  <p className="profile-verify-resend">
+                    {countdown > 0 ? (
+                      <>Resend available in {countdown}s</>
+                    ) : (
+                      <>
+                        Didn't get it?{" "}
+                        <button
+                          className="profile-verify-link"
+                          onClick={handleResend}
+                        >
+                          Resend code
+                        </button>
+                      </>
+                    )}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
 
         {/* Success message after verification */}
         {verifyStep === "done" && (

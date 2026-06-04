@@ -4165,12 +4165,12 @@ body:has(.light-mode) {
 
 /* Shared glass mixin' values */
 :root {
-  --glass-bg-dark:   rgba(15, 23, 42, 0.45);
-  --glass-bg-light:  rgba(255, 255, 255, 0.55);
-  --glass-blur:      blur(18px);
-  --glass-border-dark:  rgba(148, 163, 184, 0.18);
+  --glass-bg-dark: rgba(15, 23, 42, 0.45);
+  --glass-bg-light: rgba(255, 255, 255, 0.55);
+  --glass-blur: blur(18px);
+  --glass-border-dark: rgba(148, 163, 184, 0.18);
   --glass-border-light: rgba(255, 255, 255, 0.7);
-  --glass-shadow-dark:  0 8px 32px rgba(2, 6, 23, 0.35);
+  --glass-shadow-dark: 0 8px 32px rgba(2, 6, 23, 0.35);
   --glass-shadow-light: 0 8px 32px rgba(100, 116, 139, 0.15);
 }
 
@@ -4180,7 +4180,9 @@ body:has(.light-mode) {
   backdrop-filter: var(--glass-blur) saturate(160%) !important;
   -webkit-backdrop-filter: var(--glass-blur) saturate(160%) !important;
   border: 1px solid var(--glass-border-dark) !important;
-  box-shadow: var(--glass-shadow-dark), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  box-shadow:
+    var(--glass-shadow-dark),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
 }
 
 /* Panel cards (Insights / Charts inner cards) */
@@ -4189,7 +4191,9 @@ body:has(.light-mode) {
   backdrop-filter: var(--glass-blur) saturate(160%) !important;
   -webkit-backdrop-filter: var(--glass-blur) saturate(160%) !important;
   border: 1px solid var(--glass-border-dark) !important;
-  box-shadow: var(--glass-shadow-dark), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  box-shadow:
+    var(--glass-shadow-dark),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Side nav */
@@ -4248,9 +4252,8 @@ body:has(.light-mode) {
 }
 
 .tab-nav button:hover {
-  background: rgba(30, 41, 59, 0.60) !important;
+  background: rgba(30, 41, 59, 0.6) !important;
 }
-
 
 /* =========================
    LIGHT MODE — Glass overrides
@@ -4259,17 +4262,21 @@ body:has(.light-mode) {
 .light-mode .summary-card {
   background: var(--glass-bg-light) !important;
   border-color: var(--glass-border-light) !important;
-  box-shadow: var(--glass-shadow-light), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+  box-shadow:
+    var(--glass-shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 
 .light-mode .panel-card {
   background: var(--glass-bg-light) !important;
   border-color: var(--glass-border-light) !important;
-  box-shadow: var(--glass-shadow-light), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+  box-shadow:
+    var(--glass-shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 
 .light-mode .side-nav {
-  background: rgba(255, 255, 255, 0.60) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
   border-right-color: rgba(255, 255, 255, 0.75) !important;
   box-shadow: 2px 0 24px rgba(100, 116, 139, 0.12) !important;
 }
@@ -4279,7 +4286,7 @@ body:has(.light-mode) {
 .light-mode .budget-progress-item,
 .light-mode .subs-row,
 .light-mode .post-card {
-  background: rgba(255, 255, 255, 0.50) !important;
+  background: rgba(255, 255, 255, 0.5) !important;
   border-color: rgba(255, 255, 255, 0.72) !important;
 }
 
@@ -4291,7 +4298,7 @@ body:has(.light-mode) {
 }
 
 .light-mode .chart-card {
-  background: rgba(255, 255, 255, 0.50) !important;
+  background: rgba(255, 255, 255, 0.5) !important;
   border-color: rgba(255, 255, 255, 0.72) !important;
 }
 
@@ -4308,6 +4315,76 @@ body:has(.light-mode) {
 
 .light-mode .tab-nav button:hover {
   background: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* =========================
+   PROFILE FINANCIAL SUMMARY STRIP
+========================= */
+
+.profile-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+  transition: background 0.18s ease;
+}
+
+.profile-summary-item:last-child {
+  border-right: none;
+}
+
+.profile-summary-item:hover {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.profile-summary-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.profile-summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.profile-summary-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Light Mode */
+.light-mode .profile-summary-item:hover {
+  background: rgba(124, 58, 237, 0.04);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .profile-summary-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-summary-item:nth-child(2) {
+    border-right: none;
+  }
+
+  .profile-summary-item:nth-child(1),
+  .profile-summary-item:nth-child(2) {
+    border-bottom: 1px solid var(--border);
+  }
 }
 
 /* =========================
