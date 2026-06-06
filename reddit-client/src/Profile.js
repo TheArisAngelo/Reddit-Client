@@ -600,7 +600,7 @@ export default function Profile() {
                 setDeleteInput("");
               }}
             >
-              Delete Account
+              Delete Account (Ibhie)
             </button>
           </div>
         </div>
