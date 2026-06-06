@@ -3842,6 +3842,7 @@ body:has(.light-mode) {
   margin: 0;
   font-size: 13px;
   color: var(--muted);
+  margin-bottom: 8px;
 }
 
 .profile-new-badges {

@@ -114,7 +114,7 @@ export default function Profile() {
       if (response.data.user.avatar) {
         const url = `http://localhost:5000${response.data.user.avatar}`;
         setAvatarUrl(url);
-        sessionStorage.setItem("user-avatar", url); // ← add this
+        sessionStorage.setItem("user-avatar", url);
       }
       if (response.data.user.email) {
         setEmailInput(response.data.user.email);
@@ -218,7 +218,6 @@ export default function Profile() {
         headers: { Authorization: `Bearer ${getToken()}` },
         data: { identifier: deleteInput.trim() },
       });
-      // Clear session and redirect to login
       sessionStorage.clear();
       window.location.href = "/login";
     } catch (err) {
@@ -326,7 +325,6 @@ export default function Profile() {
       };
     }
 
-    // Fallback
     return {
       label: "Getting Started",
       description:
@@ -514,6 +512,8 @@ export default function Profile() {
               Remove photo
             </button>
           )}
+
+          {/* ── NAME + LOCATION + BADGES all together ── */}
           <div className="profile-new-hero-info">
             <h2 className="profile-new-name">{user?.username}</h2>
             <p className="profile-new-location">
@@ -553,7 +553,6 @@ export default function Profile() {
               <span className="profile-summary-icon">
                 <FiDollarSign size={22} color="#34d399" />
               </span>
-
               <span className="profile-summary-label">Saved Toward Goals</span>
               <span
                 className="profile-summary-value"
@@ -579,7 +578,6 @@ export default function Profile() {
                 <FiTarget size={22} color="#c084fc" />
               </span>
               <span className="profile-summary-label">
-                {" "}
                 Savings Goals Completed
               </span>
               <span
@@ -721,7 +719,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/*Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal */}
         {showDeleteModal && (
           <div
             className="modal-overlay"
