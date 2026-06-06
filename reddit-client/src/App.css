@@ -3808,7 +3808,7 @@ body:has(.light-mode) {
   gap: 16px;
   padding: 1.5rem;
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .profile-new-avatar {
@@ -4883,5 +4883,25 @@ body:has(.light-mode) {
   .current-balance-form {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* =========================
+   MOBILE App Body/Shell — FIXED
+========================= */
+@media (max-width: 768px) {
+  .side-nav {
+    display: none !important;
+  }
+
+  .app-shell {
+    flex-direction: column !important;
+  }
+
+  .app-body {
+    padding: 12px 12px 90px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }

@@ -519,18 +519,18 @@ export default function Profile() {
             <p className="profile-new-location">
               {[user?.place, user?.country].filter(Boolean).join(", ") || "—"}
             </p>
-          </div>
-          <div className="profile-new-badges">
-            {isVerified && (
-              <span className="profile-badge profile-badge--verified">
-                ✓ Verified
-              </span>
-            )}
-            {isGoogleUser && (
-              <span className="profile-badge profile-badge--google">
-                G Google
-              </span>
-            )}
+            <div className="profile-new-badges">
+              {isVerified && (
+                <span className="profile-badge profile-badge--verified">
+                  ✓ Verified
+                </span>
+              )}
+              {isGoogleUser && (
+                <span className="profile-badge profile-badge--google">
+                  G Google
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
