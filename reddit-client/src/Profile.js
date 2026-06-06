@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   FiTrendingDown,
@@ -65,6 +65,10 @@ export default function Profile() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const fileInputRef = useRef(null);
+
   // Verification state
   const [verifyStep, setVerifyStep] = useState("idle");
   const [emailInput, setEmailInput] = useState("");
@@ -107,6 +111,11 @@ export default function Profile() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser(response.data.user);
+      if (response.data.user.avatar) {
+        const url = `http://localhost:5000${response.data.user.avatar}`;
+        setAvatarUrl(url);
+        sessionStorage.setItem("user-avatar", url); // ← add this
+      }
       if (response.data.user.email) {
         setEmailInput(response.data.user.email);
       }
@@ -114,6 +123,42 @@ export default function Profile() {
       setError(err.response?.data?.message || "Failed to load user profile.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const res = await axios.post(`${API}/me/avatar`, formData, {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setAvatarUrl(`http://localhost:5000${res.data.avatarUrl}`);
+      sessionStorage.setItem(
+        "user-avatar",
+        `http://localhost:5000${res.data.avatarUrl}`,
+      );
+    } catch (err) {
+      console.error("Avatar upload failed", err);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await axios.delete(`${API}/me/avatar`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      setAvatarUrl(null);
+      sessionStorage.removeItem("user-avatar");
+    } catch (err) {
+      console.error("Failed to remove avatar", err);
     }
   };
 
@@ -397,7 +442,78 @@ export default function Profile() {
       <div className="profile-new-card">
         {/* Avatar + name strip */}
         <div className="profile-new-hero">
-          <div className="profile-new-avatar">{initials}</div>
+          <div
+            className="profile-new-avatar"
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              cursor: "pointer",
+              position: "relative",
+              overflow: "hidden",
+            }}
+            title="Click to change photo"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "inherit",
+                }}
+              />
+            ) : (
+              initials
+            )}
+            {/* Hover overlay */}
+            <div
+              className="avatar-edit-overlay"
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(0,0,0,0.45)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: 0,
+                transition: "opacity 0.2s",
+                fontSize: "11px",
+                color: "#fff",
+                fontWeight: 600,
+                letterSpacing: "0.05em",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = 1)}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = 0)}
+            >
+              EDIT
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleAvatarChange}
+            />
+          </div>
+
+          {/* Remove photo button — only shows if avatar is set */}
+          {avatarUrl && (
+            <button
+              onClick={handleRemoveAvatar}
+              style={{
+                fontSize: "11px",
+                color: "#fb7185",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                marginTop: "6px",
+                alignSelf: "center",
+              }}
+            >
+              Remove photo
+            </button>
+          )}
           <div className="profile-new-hero-info">
             <h2 className="profile-new-name">{user?.username}</h2>
             <p className="profile-new-location">
@@ -600,7 +716,7 @@ export default function Profile() {
                 setDeleteInput("");
               }}
             >
-              Delete Account (Ibhie)
+              Delete Account
             </button>
           </div>
         </div>

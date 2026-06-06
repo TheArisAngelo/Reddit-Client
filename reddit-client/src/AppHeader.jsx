@@ -21,6 +21,8 @@ const TABS = [
   { key: "charts", label: "Charts", Icon: BarChart2 },
 ];
 
+const avatarUrl = sessionStorage.getItem("user-avatar");
+
 export default function AppHeader({
   auth,
   activeTab,
@@ -280,7 +282,22 @@ export default function AppHeader({
             style={{ textDecoration: "none" }}
           >
             <div className="sw-avatar" aria-hidden="true">
-              {auth.username ? auth.username.slice(0, 2) : "?"}
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                  }}
+                />
+              ) : auth.username ? (
+                auth.username.slice(0, 2)
+              ) : (
+                "?"
+              )}
             </div>
             <span className="sw-username">{auth.username}</span>
           </Link>

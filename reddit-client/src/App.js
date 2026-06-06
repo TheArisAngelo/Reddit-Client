@@ -28,6 +28,8 @@ const DEFAULT_DATA = {
   savingsGoals: [],
 };
 
+
+
 const CARD_CONFIG = {
   "income-card": { icon: <TrendingUp size={17} />, iconClass: "icon-teal" },
   "expense-card": { icon: <Receipt size={17} />, iconClass: "icon-coral" },
@@ -531,7 +533,6 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
   // Logged-in view
   return (
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
-      
       {/* Sidebar — always visible on desktop, hidden on mobile via CSS */}
       <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
 

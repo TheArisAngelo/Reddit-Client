@@ -7,6 +7,9 @@ const authMiddleware = require("../middleware/authMiddleware");
 const admin = require("../utils/firebaseAdmin");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const upload = require("../middleware/upload");
+const path = require("path");
+const fs = require("fs");
 
 const router = express.Router();
 
@@ -120,6 +123,7 @@ router.get("/me", authMiddleware, async (req, res) => {
         createdAt: user.createdAt,
         email: user.email || "",
         firebaseUid: user.firebaseUid || "",
+        avatar: user.avatar || null,
       },
     });
   } catch (error) {
@@ -503,11 +507,9 @@ router.delete("/me", authMiddleware, async (req, res) => {
       identifier.trim().toLowerCase() === (user.email || "").toLowerCase();
 
     if (!isMatch) {
-      return res
-        .status(400)
-        .json({
-          message: "Username or email does not match. Please try again.",
-        });
+      return res.status(400).json({
+        message: "Username or email does not match. Please try again.",
+      });
     }
 
     // Delete user and their budget data
@@ -518,6 +520,41 @@ router.delete("/me", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Delete account error:", error);
     res.status(500).json({ message: "Server Error." });
+  }
+});
+
+// POST /api/auth/me/avatar
+router.post(
+  "/me/avatar",
+  authMiddleware,
+  upload.single("avatar"),
+  async (req, res) => {
+    try {
+      if (!req.file)
+        return res.status(400).json({ message: "No File Uploaded." });
+
+      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      await User.findByIdAndUpdate(req.user.userId, { avatar: avatarUrl });
+
+      res.json({ avatarUrl });
+    } catch (err) {
+      res.status(500).json({ message: "Avatar upload failed." });
+    }
+  },
+);
+
+// DELETE /api/auth/me/avatar
+router.delete("/me/avatar", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (user.avatar) {
+      const filePath = path.join(__dirname, "../", user.avatar);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    await User.findByIdAndUpdate(req.user.userId, { avatar: null });
+    res.json({ message: "Avatar removed." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to remove avatar." });
   }
 });
 

@@ -72,7 +72,11 @@ const userSchema = new mongoose.Schema(
     otpVerified: {
       type: Boolean,
       default: false,
-    }
+    },
+    avatar: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
 );

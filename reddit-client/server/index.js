@@ -1,7 +1,7 @@
 require("dotenv").config();
 
-
 const express = require("express");
+const path = require("path");
 const {
   helmetConfig,
   corsConfig,
@@ -9,7 +9,6 @@ const {
   authLimiter,
 } = require("./middleware/security");
 const authMiddleware = require("./middleware/auth");
-const auth = require("./middleware/auth");
 
 const app = express();
 
@@ -19,13 +18,15 @@ app.use(corsConfig);
 app.use(limiter);
 app.use(express.json());
 
-app.use("./api/login", authLimiter);
-app.use("./api/signup", authLimiter);
+// Static file serving ← this was already correct
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/api/budgets", authMiddleware);
-app.use("/api/transactions", authMiddleware);
-app.use("./api/savings", authMiddleware);
-app.use("./api/insights", authMiddleware);
+// ↓ ADD THESE — your actual routes were never imported!
+const authRoutes = require("./routes/authRoutes");
+const budgetRoutes = require("./routes/budgetRoutes");
+
+app.use("/api/auth", authRoutes);
+app.use("/api/budget", budgetRoutes);
 
 app.listen(process.env.PORT || 5000, () => {
   console.log("Server running securely");
