@@ -16,7 +16,7 @@ import WhatIfSimulator from "./WhatIfSimulator";
 import SubscriptionsTab from "./SubscriptionsTab";
 import AppHeader from "./AppHeader";
 
-const API = "http://localhost:5000/api/budget";
+const API = `${process.env.REACT_APP_API_URL}/api/budget`;
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
 const CACHE_KEY = "budget-data-cache";
 const CACHE_TTL = 5 * 60 * 1000;
