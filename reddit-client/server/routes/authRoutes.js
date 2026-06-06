@@ -146,21 +146,17 @@ router.post("/reset-password", async (req, res) => {
         .status(404)
         .json({ message: "No account found with that username or email." });
     if (user.firebaseUid && !user.password) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "This account uses Google sign in and has no password to reset.",
-        });
+      return res.status(400).json({
+        message:
+          "This account uses Google sign in and has no password to reset.",
+      });
     }
 
     // Block if OTP wasn't verified
     if (!user.otpVerified) {
-      return res
-        .status(403)
-        .json({
-          message: "OTP not verified. Please complete verification first.",
-        });
+      return res.status(403).json({
+        message: "OTP not verified. Please complete verification first.",
+      });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -419,11 +415,9 @@ router.post("/forgot/send-otp", async (req, res) => {
 
     // Block Google only accounts
     if (user.firebaseUid && !user.password) {
-      return res
-        .status(400)
-        .json({
-          message: "This account uses Google sign in and no password to reset.",
-        });
+      return res.status(400).json({
+        message: "This account uses Google sign in and no password to reset.",
+      });
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -489,6 +483,41 @@ router.post("/forgot.verify-otp", async (req, res) => {
   } catch (error) {
     console.error("Forgot verify-otp error:", error);
     res.status(500).json({ message: "Server error." });
+  }
+});
+
+// DELETE /api/auth/me
+router.delete("/me", authMiddleware, async (req, res) => {
+  try {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+      return res
+        .status(400)
+        .json({ message: "Please provide your username or email to confirm." });
+    }
+
+    // Check if identifier matches username or email
+    const isMatch =
+      identifier.trim().toLowerCase() === user.username.toLowerCase() ||
+      identifier.trim().toLowerCase() === (user.email || "").toLowerCase();
+
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({
+          message: "Username or email does not match. Please try again.",
+        });
+    }
+
+    // Delete user and their budget data
+    await BudgetData.deleteOne({ userId: req.user.userId });
+    await User.findByIdAndDelete(req.user.userId);
+
+    res.json({ message: "Account deleted successfully." });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    res.status(500).json({ message: "Server Error." });
   }
 });
 

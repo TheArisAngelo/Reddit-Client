@@ -9,6 +9,7 @@ import {
   FiFlame,
   FiAward,
   FiMoon,
+  FiAlertTriangle,
 } from "react-icons/fi";
 
 import axios from "axios";
@@ -75,6 +76,12 @@ export default function Profile() {
 
   const [budgetSummary, setBudgetSummary] = useState(null);
   const [spendingBadge, setSpendingBadge] = useState(null);
+
+  // Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     fetchProfile();
@@ -151,6 +158,30 @@ export default function Profile() {
       setSpendingBadge(badge);
     } catch (err) {
       console.error("Failed to load budget summary", err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError("");
+    if (!deleteInput.trim()) {
+      setDeleteError("Please enter your username or email.");
+      return;
+    }
+    setDeleteLoading(true);
+    try {
+      await axios.delete(`${API}/me`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+        data: { identifier: deleteInput.trim() },
+      });
+      // Clear session and redirect to login
+      sessionStorage.clear();
+      window.location.href = "/login";
+    } catch (err) {
+      setDeleteError(
+        err.response?.data?.message || "Failed to delete account.",
+      );
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -549,6 +580,81 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {/* Danger Zone */}
+        <div className="profile-new-section profile-danger-zone">
+          <p className="profile-new-section-label">Danger Zone</p>
+          <div className="danger-zone-card">
+            <div className="danger-zone-info">
+              <span className="danger-zone-title">Delete Account</span>
+              <span className="danger-zone-desc">
+                Permanently delete your account and all your data. This action
+                cannot be undone.
+              </span>
+            </div>
+            <button
+              className="danger-zone-btn"
+              onClick={() => {
+                setShowDeleteModal(true);
+                setDeleteError("");
+                setDeleteInput("");
+              }}
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
+
+        {/*Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <span className="modal-icon">
+                  <FiAlertTriangle size={22} color="#fb7185" />
+                </span>
+                <h3 className="modal-title">Delete Account</h3>
+              </div>
+              <p className="modal-desc">
+                This will permanently delete your account and all associated
+                data including transactions, budgets, and savings goals.{" "}
+                <strong>This cannot be undone.</strong>
+              </p>
+              <p className="modal-confirm-label">
+                Type your <strong>username</strong> or <strong>email</strong> to
+                confirm:
+              </p>
+              <input
+                type="text"
+                className="modal-input"
+                placeholder="Username or email"
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleDeleteAccount()}
+              />
+              {deleteError && <p className="modal-error">{deleteError}</p>}
+              <div className="modal-actions">
+                <button
+                  className="modal-cancel-btn"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleteLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="modal-delete-btn"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? "Deleting..." : "Yes, Delete My Account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Email Verification Panel (only for non-Google, unverified users) */}
         {!isGoogleUser &&
