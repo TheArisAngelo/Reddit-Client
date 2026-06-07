@@ -16,8 +16,8 @@ import axios from "axios";
 import "./App.css";
 
 const AUTH_STORAGE_KEY = "budget-tracker-auth";
-const API = "http://localhost:5000/api/auth";
-const BUDGET_API = "http://localhost:5000/api/budget";
+const API = `${process.env.REACT_APP_API_URL}/api/auth`;
+const BUDGET_API = `${process.env.REACT_APP_API_URL}/api/budget`;
 
 function getInitials(username) {
   if (!username) return "?";
@@ -112,7 +112,7 @@ export default function Profile() {
       });
       setUser(response.data.user);
       if (response.data.user.avatar) {
-        const url = `http://localhost:5000${response.data.user.avatar}`;
+        const url = `${process.env.REACT_APP_API_URL}${response.data.user.avatar}`;
         setAvatarUrl(url);
         sessionStorage.setItem("user-avatar", url);
       }
@@ -140,10 +140,10 @@ export default function Profile() {
           "Content-Type": "multipart/form-data",
         },
       });
-      setAvatarUrl(`http://localhost:5000${res.data.avatarUrl}`);
+      setAvatarUrl(`${process.env.REACT_APP_API_URL}${res.data.avatarUrl}`);
       sessionStorage.setItem(
         "user-avatar",
-        `http://localhost:5000${res.data.avatarUrl}`,
+        `${process.env.REACT_APP_API_URL}${res.data.avatarUrl}`,
       );
     } catch (err) {
       console.error("Avatar upload failed", err);
