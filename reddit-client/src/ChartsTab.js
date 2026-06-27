@@ -72,7 +72,11 @@ export default function ChartsTab({ transactions, currentBalance, darkMode }) {
     const monthMap = {};
 
     transactions.forEach((t) => {
+      if (!t.date) return;
+
       const date = new Date(t.date);
+      if (isNaN(date.getTime())) return;
+
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       const label = date.toLocaleString("default", {
         month: "short",
@@ -80,7 +84,7 @@ export default function ChartsTab({ transactions, currentBalance, darkMode }) {
       });
 
       if (!monthMap[key]) {
-        monthMap[key] = { month: label, income: 0, expenses: 0 };
+        monthMap[key] = { key, month: label, income: 0, expenses: 0 };
       }
 
       if (t.type === "income") {
@@ -90,9 +94,9 @@ export default function ChartsTab({ transactions, currentBalance, darkMode }) {
       }
     });
 
-    return Object.values(monthMap).sort((a, b) =>
-      a.month.localeCompare(b.month),
-    );
+    return Object.values(monthMap)
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map(({ key, ...rest }) => rest);
   }, [transactions]);
 
   const isEmpty = transactions.length === 0;
@@ -146,11 +150,11 @@ export default function ChartsTab({ transactions, currentBalance, darkMode }) {
                   <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis
                     dataKey="date"
-                    tick={{ fill: "axisColor", fontSize: 12 }}
+                    tick={{ fill: axisColor, fontSize: 12 }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "axisColor", fontSize: 12 }}
+                    tick={{ fill: axisColor, fontSize: 12 }}
                     tickLine={false}
                     tickFormatter={(v) => `₱${v}`}
                   />
