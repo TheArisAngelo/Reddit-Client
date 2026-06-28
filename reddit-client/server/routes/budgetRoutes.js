@@ -263,4 +263,23 @@ router.delete("/subscriptions/:id", authMiddleware, async (req, res) => {
   }
 });
 
+router.patch("/subscriptions/:id", authMiddleware, async (req, res) => {
+  try {
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+    if (!budgetData) return res.status(404).json({ message: "Not found" });
+
+    const sub = budgetData.subscriptions.id(req.params.id);
+    if (!sub) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    sub.renewalDate = req.body.renewalDate;
+    await budgetData.save();
+    cache.del(userCacheKey(req));
+    res.json({ subscriptions: budgetData.subscriptions });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

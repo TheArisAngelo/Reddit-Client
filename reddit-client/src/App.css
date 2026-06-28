@@ -4644,6 +4644,18 @@ body:has(.light-mode) {
 }
 
 /* =========================
+   Mark as Paid in Subscription Watcher 
+========================= */
+.subs-paid-btn {
+  color: var(--color-green, #22c55e);
+  border-color: var(--color-green, #22c55e);
+}
+
+.subs-paid-btn:hover {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+/* =========================
    RESPONSIVE — 1100px
 ========================= */
 

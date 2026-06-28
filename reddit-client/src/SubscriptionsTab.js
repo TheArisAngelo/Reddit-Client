@@ -13,6 +13,16 @@ const CATEGORIES = [
   "Other",
 ];
 
+function advanceRenewalDate(dateStr, billingCycle) {
+  const d = new Date(dateStr);
+  if (billingCycle === "yearly") {
+    d.setFullYear(d.getFullYear() + 1);
+  } else {
+    d.setMonth(d.getMonth() + 1);
+  }
+  return d.toISOString().split("T")[0];
+}
+
 function daysUntil(dateStr) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -85,6 +95,20 @@ export default function SubscriptionsTab({ token }) {
     const res = await fetch(`${API}/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setSubscriptions(data.subscriptions || []);
+  };
+
+  const handleMarkPaid = async (sub) => {
+    const newDate = advanceRenewalDate(sub.renewalDate, sub.billingCycle);
+    const res = await fetch(`${API}/${sub._id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ renewalDate: newDate }),
     });
     const data = await res.json();
     setSubscriptions(data.subscriptions || []);
@@ -224,9 +248,23 @@ export default function SubscriptionsTab({ token }) {
                       <span className="subs-row-name">{s.name}</span>
                       <span className="subs-row-category">{s.category}</span>
                     </div>
-                    <span className={`subs-renewal-label ${className}`}>
-                      {label}
-                    </span>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <span className={`subs-renewal-label ${className}`}>
+                        {label}
+                      </span>
+                      <button
+                        className="budget-history-btn subs-paid-btn"
+                        onClick={() => handleMarkPaid(s)}
+                      >
+                        ✓ Mark Paid
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -260,6 +298,14 @@ export default function SubscriptionsTab({ token }) {
                     <span className={`subs-renewal-label ${className}`}>
                       {label}
                     </span>
+                    {days <= 7 && (
+                      <button
+                        className="budget-history-btn subs-paid-btn"
+                        onClick={() => handleMarkPaid(s)}
+                      >
+                        ✓ Mark Paid
+                      </button>
+                    )}
                     <button
                       className="budget-history-btn subs-remove-btn"
                       onClick={() => handleDelete(s._id)}
