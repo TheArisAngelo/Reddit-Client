@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import { Link } from "react-router-dom";
+import { useGlobalContext } from "./context/GlobalContext";
 
 const TABS = [
   { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -23,13 +24,8 @@ const TABS = [
 
 const avatarUrl = sessionStorage.getItem("user-avatar");
 
-export default function AppHeader({
-  auth,
-  activeTab,
-  onTabChange,
-  darkMode,
-  onToggleDark,
-}) {
+export default function AppHeader({ activeTab, onTabChange, onToggleDark }) {
+  const { auth, darkMode } = useGlobalContext();
   return (
     <>
       <style>{`
@@ -274,7 +270,7 @@ export default function AppHeader({
         </nav>
 
         <div className="sw-controls">
-          <NotificationBell token={auth.token} />
+          <NotificationBell />
           <Link
             to="/profile"
             className="sw-user-chip"

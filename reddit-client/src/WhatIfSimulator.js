@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useGlobalContext } from "./context/GlobalContext";
 
 const FREQ_OPTIONS = [
   { label: "Every day", value: 30 },
@@ -56,9 +57,8 @@ function deriveHabits(transactions) {
 }
 
 export default function WhatIfSimulator() {
-  // Read transactions passed from the sidebar Link via route state
-  const location = useLocation();
-  const transactions = location.state?.transactions || [];
+  const { budgetData } = useGlobalContext();
+  const transactions = budgetData?.transactions || [];
 
   const habits = useMemo(() => deriveHabits(transactions), [transactions]);
   const hasHabits = habits.length > 0;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useGlobalContext } from "./context/GlobalContext";
 
 const API = "http://localhost:5000/api/budget/subscriptions";
 
@@ -42,7 +43,9 @@ function getRenewalStatus(days) {
   return { label: `In ${days} days`, className: "renewal-ok" };
 }
 
-export default function SubscriptionsTab({ token }) {
+export default function SubscriptionsTab() {
+  const { auth } = useGlobalContext();
+  const token = auth?.token;
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

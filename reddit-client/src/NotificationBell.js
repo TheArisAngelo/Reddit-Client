@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-
+import { useGlobalContext } from "./context/GlobalContext";
 
 const NOTIF_API = "http://localhost:5000/api/notifications";
 
-export default function NotificationBell({ token }) {
+export default function NotificationBell() {
+  const { token } = useGlobalContext();
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

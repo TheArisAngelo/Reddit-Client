@@ -15,18 +15,7 @@ import NotificationBell from "./NotificationBell";
 import WhatIfSimulator from "./WhatIfSimulator";
 import SubscriptionsTab from "./SubscriptionsTab";
 import AppHeader from "./AppHeader";
-
-const API = `${process.env.REACT_APP_API_URL}/api/budget`;
-const AUTH_STORAGE_KEY = "budget-tracker-auth";
-const CACHE_KEY = "budget-data-cache";
-const CACHE_TTL = 5 * 60 * 1000;
-
-const DEFAULT_DATA = {
-  currentBalance: 0,
-  transactions: [],
-  budgets: [],
-  savingsGoals: [],
-};
+import { useGlobalContext } from "./context/GlobalContext";
 
 const CARD_CONFIG = {
   "income-card": { icon: <TrendingUp size={17} />, iconClass: "icon-teal" },
@@ -40,60 +29,6 @@ function sanitize(str) {
   return str.trim().replace(/<[^>]*>/g, "");
 }
 
-function isTokenExpired(token) {
-  if (!token) return true;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
-}
-
-function getStoredAuth() {
-  const saved = sessionStorage.getItem(AUTH_STORAGE_KEY);
-  try {
-    const parsed = saved ? JSON.parse(saved) : null;
-    if (parsed?.isLoggedIn && isTokenExpired(parsed.token)) {
-      sessionStorage.removeItem(AUTH_STORAGE_KEY);
-      return { isLoggedIn: false, username: "" };
-    }
-    return parsed?.isLoggedIn ? parsed : { isLoggedIn: false, username: "" };
-  } catch (error) {
-    return { isLoggedIn: false, username: "" };
-  }
-}
-
-function getCachedBudgetData() {
-  try {
-    const item = sessionStorage.getItem(CACHE_KEY);
-    if (!item) return null;
-    const { data, timestamp } = JSON.parse(item);
-    if (Date.now() - timestamp > CACHE_TTL) {
-      sessionStorage.removeItem(CACHE_KEY);
-      return null;
-    }
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function setCachedBudgetData(data) {
-  try {
-    sessionStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({ data, timestamp: Date.now() }),
-    );
-  } catch {
-    // storage full or unavailable, skip caching
-  }
-}
-
-function clearBudgetCache() {
-  sessionStorage.removeItem(CACHE_KEY);
-}
-
 function currency(amount) {
   return `₱${Math.round(Number(amount || 0)).toLocaleString()}`;
 }
@@ -101,84 +36,57 @@ function currency(amount) {
 function filterTransactions(transactions, period) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
   return transactions.filter((t) => {
     const [year, month, day] = t.date.split("-").map(Number);
     const date = new Date(year, month - 1, day);
-
     if (period === "week") {
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay());
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
       return date >= startOfWeek && date <= endOfWeek;
-    } else if (period === "month") {
+    }
+    if (period === "month")
       return (
         date.getMonth() === today.getMonth() &&
         date.getFullYear() === today.getFullYear()
       );
-    } else if (period === "year") {
-      return date.getFullYear() === today.getFullYear();
-    }
+    if (period === "year") return date.getFullYear() === today.getFullYear();
     return true;
   });
 }
 
-function ProtectedRoute({ isLoggedIn, children }) {
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
-  }
+function ProtectedRoute({ children }) {
+  const { auth } = useGlobalContext();
+  if (!auth.isLoggedIn) return <Navigate to="/login" replace />;
   return children;
 }
 
-function MobileSubNav({ auth, onLogout, transactions = [] }) {
+function MobileSubNav() {
+  const { auth, handleLogout } = useGlobalContext();
   const location = useLocation();
   if (!auth.isLoggedIn) return null;
   return (
     <>
       <style>{`
-        .mobile-sub-nav {
-          display: none;
-        }
+        .mobile-sub-nav { display: none; }
         @media (max-width: 768px) {
           .mobile-sub-nav {
-            display: flex;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(8, 15, 28, 0.96);
-            backdrop-filter: blur(16px);
+            display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(8,15,28,0.96); backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            border-top: 1px solid rgba(148,163,184,0.16);
             padding: 6px 0 env(safe-area-inset-bottom, 6px);
           }
           .mobile-sub-nav-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            flex: 1;
-            padding: 8px 4px;
-            border: none;
-            background: transparent;
-            color: #94a3b8;
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            text-decoration: none;
-            transition: color 0.18s ease;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 4px; flex: 1; padding: 8px 4px;
+            border: none; background: transparent; color: #94a3b8;
+            font-size: 10px; font-weight: 600; cursor: pointer;
+            font-family: inherit; text-decoration: none; transition: color .18s ease;
           }
-          .mobile-sub-nav-btn:hover,
-          .mobile-sub-nav-btn.active {
-            color: #a78bfa;
-          }
-          .mobile-sub-nav-btn svg {
-            flex-shrink: 0;
-          }
+          .mobile-sub-nav-btn:hover, .mobile-sub-nav-btn.active { color: #a78bfa; }
+          .mobile-sub-nav-btn svg { flex-shrink: 0; }
         }
       `}</style>
       <nav className="mobile-sub-nav">
@@ -260,7 +168,7 @@ function MobileSubNav({ auth, onLogout, transactions = [] }) {
           </svg>
           <span>Subscriptions</span>
         </Link>
-        <button className="mobile-sub-nav-btn" onClick={onLogout}>
+        <button className="mobile-sub-nav-btn" onClick={handleLogout}>
           <svg
             width="20"
             height="20"
@@ -282,21 +190,15 @@ function MobileSubNav({ auth, onLogout, transactions = [] }) {
   );
 }
 
-// SideNav always visible on desktop, hidden on mobile
-function SideNav({ auth, onLogout, transactions }) {
+function SideNav() {
+  const { auth, handleLogout, budgetData } = useGlobalContext();
   if (!auth.isLoggedIn) return null;
-
+  const transactions = budgetData?.transactions ?? [];
   return (
     <aside className="side-nav">
       <div className="side-nav-header">
         <h3>
-          <Link
-            to="/"
-            style={{
-              textDecoration: "none",
-              color: "inherit",
-            }}
-          >
+          <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
             SpendWise
           </Link>
         </h3>
@@ -306,17 +208,16 @@ function SideNav({ auth, onLogout, transactions }) {
         <Link to="/profile" className="side-nav-link">
           👤 Profile
         </Link>
-        <Link
-          to="/simulator"
-          state={{ transactions }}
-          className="side-nav-link"
-        >
+        <Link to="/simulator" className="side-nav-link">
           💡 What-if Simulator
         </Link>
         <Link to="/subscriptions" className="side-nav-link">
           📋 Subscription Watcher
         </Link>
-        <button className="side-nav-link side-nav-logout" onClick={onLogout}>
+        <button
+          className="side-nav-link side-nav-logout"
+          onClick={handleLogout}
+        >
           ➜] Log Out
         </button>
       </div>
@@ -324,6 +225,7 @@ function SideNav({ auth, onLogout, transactions }) {
   );
 }
 
+// Summary Card
 function SummaryCard({
   title,
   amount,
@@ -334,7 +236,6 @@ function SummaryCard({
   isEmpty,
 }) {
   const config = CARD_CONFIG[className] || {};
-
   return (
     <div className={`summary-card ${className || ""}`}>
       <div className="summary-card-top">
@@ -345,7 +246,6 @@ function SummaryCard({
           </span>
         )}
       </div>
-
       {isEmpty ? (
         <div className="summary-empty">
           <span className="summary-empty-dash" />
@@ -366,98 +266,36 @@ function SummaryCard({
   );
 }
 
-function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
+// HomePage
+function HomePage() {
+  const {
+    auth,
+    handleLogout,
+    darkMode,
+    toggleDarkMode,
+    budgetData,
+    setBudgetData,
+    setCachedBudgetData,
+    clearBudgetCache,
+    isTokenExpired,
+    API,
+  } = useGlobalContext();
+
+  // Only truly local state stays here
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [budgetData, setBudgetData] = useState(DEFAULT_DATA);
   const [balanceInput, setBalanceInput] = useState("");
   const [period, setPeriod] = useState("week");
 
   // Auto-logout when token expires
   useEffect(() => {
     const interval = setInterval(() => {
-      if (auth?.token && isTokenExpired(auth.token)) {
-        onLogout();
-      }
-    }, 60 * 1000);
+      if (auth?.token && isTokenExpired(auth.token)) handleLogout();
+    }, 60_000);
     return () => clearInterval(interval);
-  }, [auth?.token, onLogout]);
-
-  useEffect(() => {
-    if (auth?.token) {
-      if (isTokenExpired(auth.token)) {
-        onLogout();
-        return;
-      }
-
-      const cached = getCachedBudgetData();
-      if (cached) {
-        setBudgetData(cached);
-        return;
-      }
-
-      fetch(API, {
-        headers: { Authorization: `Bearer ${auth.token}` },
-      })
-        .then((r) => {
-          if (r.status === 401) {
-            onLogout();
-            return null;
-          }
-          return r.json();
-        })
-        .then((data) => {
-          if (!data) return;
-          if (data && typeof data === "object") {
-            setBudgetData({
-              currentBalance: data.currentBalance ?? 0,
-              transactions: Array.isArray(data.transactions)
-                ? data.transactions
-                : [],
-              budgets: Array.isArray(data.budgets) ? data.budgets : [],
-              savingsGoals: Array.isArray(data.savingsGoals)
-                ? data.savingsGoals
-                : [],
-            });
-            setCachedBudgetData(data);
-          } else {
-            setBudgetData(DEFAULT_DATA);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load budget data", err);
-          setBudgetData(DEFAULT_DATA);
-        });
-    } else {
-      setBudgetData(DEFAULT_DATA);
-    }
   }, [auth?.token]);
 
-  const handleAddDeposit = async (budgetId, deposit) => {
-    try {
-      const res = await fetch(`${API}/budgets/${budgetId}/deposits`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
-        },
-        body: JSON.stringify(deposit),
-      });
-      if (res.status === 401) {
-        onLogout();
-        return;
-      }
-      const updated = await res.json();
-      if (updated && Array.isArray(updated.budgets)) {
-        setBudgetData(updated);
-        setCachedBudgetData(updated);
-      }
-    } catch (err) {
-      console.error("Failed to save deposit", err);
-    }
-  };
-
   const handleAddTransaction = async (newTransaction) => {
-    const safeTransaction = {
+    const safe = {
       ...newTransaction,
       category: sanitize(newTransaction.category),
       description: sanitize(newTransaction.description || ""),
@@ -470,10 +308,10 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify(safeTransaction),
+        body: JSON.stringify(safe),
       });
       if (res.status === 401) {
-        onLogout();
+        handleLogout();
         return;
       }
       const updated = await res.json();
@@ -486,13 +324,8 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
     }
   };
 
-  const handleGoalsUpdate = (updatedData) => {
-    setBudgetData(updatedData);
-    setCachedBudgetData(updatedData);
-  };
-
   const handleAddBudget = async (newBudget) => {
-    const safeBudget = {
+    const safe = {
       ...newBudget,
       name: sanitize(newBudget.name || ""),
       category: sanitize(newBudget.category || ""),
@@ -505,10 +338,10 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify(safeBudget),
+        body: JSON.stringify(safe),
       });
       if (res.status === 401) {
-        onLogout();
+        handleLogout();
         return;
       }
       const updated = await res.json();
@@ -516,6 +349,30 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
       setCachedBudgetData(updated);
     } catch (err) {
       console.error("Failed to add budget", err);
+    }
+  };
+
+  const handleAddDeposit = async (budgetId, deposit) => {
+    try {
+      const res = await fetch(`${API}/budgets/${budgetId}/deposits`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(deposit),
+      });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
+      const updated = await res.json();
+      if (updated && Array.isArray(updated.budgets)) {
+        setBudgetData(updated);
+        setCachedBudgetData(updated);
+      }
+    } catch (err) {
+      console.error("Failed to save deposit", err);
     }
   };
 
@@ -527,7 +384,6 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
       parsedBalance <= 0
     )
       return;
-
     try {
       clearBudgetCache();
       const res = await fetch(`${API}/balance`, {
@@ -539,7 +395,7 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
         body: JSON.stringify({ addBalance: parsedBalance }),
       });
       if (res.status === 401) {
-        onLogout();
+        handleLogout();
         return;
       }
       const updated = await res.json();
@@ -560,6 +416,11 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
     }
   };
 
+  const handleGoalsUpdate = (updatedData) => {
+    setBudgetData(updatedData);
+    setCachedBudgetData(updatedData);
+  };
+
   const {
     currentBalance,
     transactions = [],
@@ -571,62 +432,57 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
     () => filterTransactions(transactions, period),
     [transactions, period],
   );
-
   const totalIncome = useMemo(
     () =>
       filteredTransactions
-        .filter((item) => item.type === "income")
-        .reduce((sum, item) => sum + item.amount, 0),
+        .filter((t) => t.type === "income")
+        .reduce((s, t) => s + t.amount, 0),
     [filteredTransactions],
   );
-
   const totalExpenses = useMemo(
     () =>
       filteredTransactions
-        .filter((item) => item.type === "expense")
-        .reduce((sum, item) => sum + item.amount, 0),
+        .filter((t) => t.type === "expense")
+        .reduce((s, t) => s + t.amount, 0),
     [filteredTransactions],
   );
-
   const expenseCount = filteredTransactions.filter(
-    (item) => item.type === "expense",
+    (t) => t.type === "expense",
   ).length;
-
   const allTimeIncome = transactions
-    .filter((item) => item.type === "income")
-    .reduce((sum, item) => sum + item.amount, 0);
-
+    .filter((t) => t.type === "income")
+    .reduce((s, t) => s + t.amount, 0);
   const filteredCurrentBalance =
     filteredTransactions
-      .filter((item) => item.type === "income")
-      .reduce((sum, item) => sum + item.amount, 0) -
+      .filter((t) => t.type === "income")
+      .reduce((s, t) => s + t.amount, 0) -
     filteredTransactions
-      .filter((item) => item.type === "expense")
-      .reduce((sum, item) => sum + item.amount, 0);
-
+      .filter((t) => t.type === "expense")
+      .reduce((s, t) => s + t.amount, 0);
   const spendingRate =
     (period === "all" ? allTimeIncome : filteredCurrentBalance) > 0
       ? (totalExpenses /
           (period === "all" ? allTimeIncome : filteredCurrentBalance)) *
         100
       : 0;
-
   const spendingStatus =
     spendingRate < 50 ? "Good" : spendingRate < 80 ? "Warning" : "Critical";
 
-  const categoryTotals = useMemo(() => {
-    return filteredTransactions
-      .filter((item) => item.type === "expense")
-      .reduce((acc, item) => {
-        acc[item.category] = (acc[item.category] || 0) + item.amount;
-        return acc;
-      }, {});
-  }, [filteredTransactions]);
-
+  const categoryTotals = useMemo(
+    () =>
+      filteredTransactions
+        .filter((t) => t.type === "expense")
+        .reduce((acc, t) => {
+          acc[t.category] = (acc[t.category] || 0) + t.amount;
+          return acc;
+        }, {}),
+    [filteredTransactions],
+  );
   const biggestExpenseCategory = useMemo(() => {
     const entries = Object.entries(categoryTotals);
-    if (entries.length === 0) return null;
-    return entries.reduce((max, curr) => (curr[1] > max[1] ? curr : max));
+    return entries.length
+      ? entries.reduce((max, curr) => (curr[1] > max[1] ? curr : max))
+      : null;
   }, [categoryTotals]);
 
   // Guest view
@@ -679,22 +535,15 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
     );
   }
 
-  // Logged-in view
   return (
     <div className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}>
-      {/* Sidebar — always visible on desktop, hidden on mobile via CSS */}
-      <SideNav auth={auth} onLogout={onLogout} transactions={transactions} />
-
-      {/* Main content area */}
+      <SideNav />
       <div className="app-body">
         <AppHeader
-          auth={auth}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          darkMode={darkMode}
-          onToggleDark={onToggleDark}
+          onToggleDark={toggleDarkMode}
         />
-
         <main className="budget-main">
           {activeTab !== "budgets" && activeTab !== "savings" && (
             <div className="period-filter">
@@ -776,7 +625,6 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
               onAddTransaction={handleAddTransaction}
             />
           )}
-
           {activeTab === "budgets" && (
             <BudgetsTab
               budgets={budgets}
@@ -785,7 +633,6 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
               onAddDeposit={handleAddDeposit}
             />
           )}
-
           {activeTab === "dashboard" && (
             <InsightsTab
               transactions={filteredTransactions}
@@ -795,15 +642,12 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
               period={period}
             />
           )}
-
           {activeTab === "savings" && (
             <SavingsTab
               savingsGoals={savingsGoals}
-              auth={auth}
               onGoalsUpdate={handleGoalsUpdate}
             />
           )}
-
           {activeTab === "insights" && (
             <InsightsTab
               transactions={filteredTransactions}
@@ -813,12 +657,10 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
               period={period}
             />
           )}
-
           {activeTab === "charts" && (
             <ChartsTab
               transactions={transactions}
               currentBalance={currentBalance}
-              darkMode={darkMode}
             />
           )}
         </main>
@@ -827,85 +669,63 @@ function HomePage({ auth, onLogout, darkMode, onToggleDark }) {
   );
 }
 
+// App Routes Only
 export default function App() {
-  const [auth, setAuth] = useState(getStoredAuth());
-  const [darkMode, setDarkMode] = useState(true);
-
-  const handleLogin = (authData) => {
-    clearBudgetCache();
-    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
-    setAuth(authData);
-  };
-
-  const handleLogout = () => {
-    clearBudgetCache();
-    sessionStorage.removeItem(AUTH_STORAGE_KEY);
-    setAuth({ isLoggedIn: false, username: "", token: "" });
-  };
-
-  useEffect(() => {
-    setAuth(getStoredAuth());
-  }, []);
+  const { auth, handleLogin, handleLogout, darkMode } = useGlobalContext();
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <HomePage
-            auth={auth}
-            onLogout={handleLogout}
-            darkMode={darkMode}
-            onToggleDark={() => setDarkMode((prev) => !prev)}
-          />
-        }
-      />
+      <Route path="/" element={<HomePage />} />
+
       <Route
         path="/profile"
         element={
-          <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
+          <ProtectedRoute>
             <div
               className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}
             >
-              <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
+              <SideNav />
               <div className="app-body">
                 <Profile />
-                <MobileSubNav auth={auth} onLogout={handleLogout} />
+                <MobileSubNav />
               </div>
             </div>
           </ProtectedRoute>
         }
       />
+
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+
       <Route
         path="/simulator"
         element={
-          <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
+          <ProtectedRoute>
             <div
               className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}
             >
-              <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
+              <SideNav />
               <div className="app-body">
                 <WhatIfSimulator />
-                <MobileSubNav auth={auth} onLogout={handleLogout} />
+                <MobileSubNav />
               </div>
             </div>
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/subscriptions"
         element={
-          <ProtectedRoute isLoggedIn={auth.isLoggedIn}>
+          <ProtectedRoute>
             <div
               className={`app-shell budget-app ${darkMode ? "" : "light-mode"}`}
             >
-              <SideNav auth={auth} onLogout={handleLogout} transactions={[]} />
+              <SideNav />
               <div className="app-body">
-                <SubscriptionsTab token={auth.token} />
-                <MobileSubNav auth={auth} onLogout={handleLogout} />
+                <SubscriptionsTab />
+                <MobileSubNav />
               </div>
             </div>
           </ProtectedRoute>

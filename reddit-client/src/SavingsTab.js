@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useGlobalContext } from "./context/GlobalContext";
 
 const API = "http://localhost:5000/api/budget";
 
@@ -282,7 +283,8 @@ function AddGoalForm({ onAdd, onCancel }) {
   );
 }
 
-export default function SavingsTab({ savingsGoals = [], auth, onGoalsUpdate }) {
+export default function SavingsTab({ savingsGoals = [], onGoalsUpdate }) {
+  const { auth } = useGlobalContext();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState("all");
 
