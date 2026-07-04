@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useGlobalContext } from "./context/GlobalContext";
 
 // Constants
 
@@ -36,7 +37,10 @@ function currency(amount) {
 
 // Component
 
-export default function TransactionsTab({ transactions, onAddTransaction }) {
+export default function TransactionsTab({ onAddTransaction }) {
+  const { budgetData } = useGlobalContext();
+  const transactions = budgetData?.transactions || [];
+  
   const [formData, setFormData] = useState({
     title: "",
     amount: "",

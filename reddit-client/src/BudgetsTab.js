@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useGlobalContext } from "./context/GlobalContext";
 
 // Helpers
 
@@ -107,7 +108,6 @@ function BudgetProgress({ budget, onDeposit }) {
 
   return (
     <div className={`budget-progress-item budget-progress-item--${status}`}>
-
       {/* Completed banner */}
       {isCompleted && (
         <div className="budget-completed-banner">
@@ -251,12 +251,15 @@ function BudgetProgress({ budget, onDeposit }) {
 
 // Main Component
 
-export default function BudgetsTab({
-  budgets,
-  categoryTotals,
-  onAddBudget,
-  onAddDeposit,
-}) {
+export default function BudgetsTab({ onAddBudget, onAddDeposit }) {
+  const { budgetData } = useGlobalContext();
+  const budgets = budgetData?.budgets || [];
+  const categoryTotals = budgets
+    .flatMap((b) => b.deposits || [])
+    .reduce((acc, d) => {
+      acc[d.category] = (acc[d.category] || 0) + d.amount;
+      return acc;
+    }, {});
   const [formData, setFormData] = useState({
     category: "",
     limit: "",

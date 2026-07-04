@@ -620,15 +620,10 @@ function HomePage() {
             )}
 
           {activeTab === "transactions" && (
-            <TransactionsTab
-              transactions={transactions}
-              onAddTransaction={handleAddTransaction}
-            />
+            <TransactionsTab onAddTransaction={handleAddTransaction} />
           )}
           {activeTab === "budgets" && (
             <BudgetsTab
-              budgets={budgets}
-              categoryTotals={categoryTotals}
               onAddBudget={handleAddBudget}
               onAddDeposit={handleAddDeposit}
             />
