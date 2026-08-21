@@ -5,6 +5,8 @@ import "./App.css";
 import { auth, googleProvider } from "./firebase";
 import { signInWithPopup } from "firebase/auth";
 
+const API_BASE = process.env.REACT_APP_API_URL || "";
+
 export default function SignUpPage() {
   const navigate = useNavigate();
 
@@ -18,10 +20,9 @@ export default function SignUpPage() {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseToken = await result.user.getIdToken();
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/google/signup",
-        { firebaseToken },
-      );
+      const response = await axios.post(`${API_BASE}/api/auth/google/signup`, {
+        firebaseToken,
+      });
 
       navigate("/login", {
         state: { message: "Google account registered! Please log in." },
@@ -117,7 +118,7 @@ export default function SignUpPage() {
     try {
       setLoading(true);
 
-      await axios.post("http://localhost:5000/api/auth/signup", {
+      await axios.post(`${API_BASE}/api/auth/signup`, {
         username,
         email,
         password,

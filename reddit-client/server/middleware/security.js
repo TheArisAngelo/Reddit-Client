@@ -6,24 +6,30 @@ const helmetConfig = helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "blob:", "http://localhost:5000"],
+      "img-src": [
+        "'self'",
+        "data:",
+        "blob:",
+        "http://localhost:5000",
+        process.env.SERVER_URL || "",
+      ],
     },
   },
 });
 
 const corsConfig = cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: [process.env.CLIENT_URL, "http://localhost:3000"].filter(Boolean),
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 });
 
 const limiter = rateLimit({
-  windowMS: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000,
   max: 100,
 });
 
 const authLimiter = rateLimit({
-  windowMS: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000,
   max: 10,
 });
 

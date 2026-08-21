@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGlobalContext } from "./context/GlobalContext";
 
-const API = "http://localhost:5000/api/budget/subscriptions";
+const API = `${process.env.REACT_APP_API_URL || ""}/api/budget/subscriptions`;
 
 const CATEGORIES = [
   "Netflix",

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { useGlobalContext } from "./context/GlobalContext";
 
-const NOTIF_API = "http://localhost:5000/api/notifications";
+const NOTIF_API = `${process.env.REACT_APP_API_URL || ""}/api/notifications`;
 
 export default function NotificationBell() {
   const { token } = useGlobalContext();

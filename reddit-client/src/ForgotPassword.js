@@ -4,6 +4,8 @@ import axios from "axios";
 import "./App.css";
 import { FaLock, FaLockOpen } from "react-icons/fa";
 
+const API_BASE = process.env.REACT_APP_API_URL || "";
+
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -35,9 +37,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/auth/forgot/send-otp", {
-        identifier,
-      });
+      await axios.post(`${API_BASE}/api/auth/forgot/send-otp`, { identifier });
       setSuccess("OTP sent! Check your email.");
       setStep(2);
     } catch (err) {
@@ -57,10 +57,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/auth/forgot/verify-otp", {
-        identifier,
-        otp,
-      });
+      await axios.post(`${API_BASE}/api/auth/forgot/verify-otp`, { identifier, otp });
       setSuccess("OTP verified! Set your new password.");
       setStep(3);
     } catch (err) {
@@ -84,10 +81,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/auth/reset-password", {
-        identifier,
-        newPassword,
-      });
+      await axios.post(`${API_BASE}/api/auth/reset-password`, { identifier, newPassword });
       setSuccess("Password reset successful. Redirecting to login...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {

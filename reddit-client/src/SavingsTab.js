@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useGlobalContext } from "./context/GlobalContext";
 
-const API = "http://localhost:5000/api/budget";
+const API = `${process.env.REACT_APP_API_URL || ""}/api/budget`;
 
 function currency(amount) {
   return `₱${Math.round(Number(amount || 0)).toLocaleString()}`;
