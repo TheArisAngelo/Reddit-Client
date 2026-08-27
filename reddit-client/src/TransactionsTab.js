@@ -40,7 +40,7 @@ function currency(amount) {
 export default function TransactionsTab({ onAddTransaction }) {
   const { budgetData } = useGlobalContext();
   const transactions = budgetData?.transactions || [];
-  
+
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
@@ -129,8 +129,10 @@ export default function TransactionsTab({ onAddTransaction }) {
           (filterCategory === "Other" && !CATEGORIES.includes(t.category));
 
         // Date period filter
+        // Income is not scoped to a period — it should always be counted,
+        // not just when it falls inside the currently selected week/month/year.
         let matchDate = true;
-        if (filterPeriod !== "all") {
+        if (filterPeriod !== "all" && t.type !== "income") {
           const now = new Date();
           const today = new Date(
             now.getFullYear(),

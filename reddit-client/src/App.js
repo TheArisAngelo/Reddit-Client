@@ -37,6 +37,9 @@ function filterTransactions(transactions, period) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return transactions.filter((t) => {
+    // Income should always count toward your totals, regardless of which
+    // period is selected — only expenses get scoped to the chosen period.
+    if (t.type === "income") return true;
     const [year, month, day] = t.date.split("-").map(Number);
     const date = new Date(year, month - 1, day);
     if (period === "week") {
