@@ -4918,3 +4918,49 @@ body:has(.light-mode) {
     overflow-x: hidden;
   }
 }
+
+/* =========================
+   New Category CSS, You can select as many categories as much as you want
+========================= */
+
+.transaction-field-wide {
+  grid-column: 1 / -1;
+}
+
+.category-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.08);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.category-chip:hover {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.category-chip-active {
+  background: rgba(124, 58, 237, 0.18);
+  border-color: #7c3aed;
+  color: #d8b4fe;
+}
+
+.category-chip-active:hover {
+  background: rgba(124, 58, 237, 0.28);
+}

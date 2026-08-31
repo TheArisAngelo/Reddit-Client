@@ -35,6 +35,13 @@ function currency(amount) {
   return `₱${Math.round(Number(amount || 0))}`;
 }
 
+// Normalize a transaction's category to an array, since older/legacy
+// transactions may still have a single string category.
+function categoriesOf(t) {
+  if (Array.isArray(t.category)) return t.category;
+  return t.category ? [t.category] : [];
+}
+
 // Component
 
 export default function TransactionsTab({ onAddTransaction }) {
@@ -45,7 +52,7 @@ export default function TransactionsTab({ onAddTransaction }) {
     title: "",
     amount: "",
     date: "",
-    category: "Food",
+    categories: [],
     type: "expense",
     tags: "",
     isRecurring: false,
@@ -68,13 +75,30 @@ export default function TransactionsTab({ onAddTransaction }) {
     }));
   };
 
+  const toggleCategory = (cat) => {
+    setFormData((prev) => {
+      const isSelected = prev.categories.includes(cat);
+      return {
+        ...prev,
+        categories: isSelected
+          ? prev.categories.filter((c) => c !== cat)
+          : [...prev.categories, cat],
+      };
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmedTitle = formData.title.trim();
     const amountValue = parseInt(formData.amount, 10);
 
-    if (!trimmedTitle || !formData.date || !formData.amount) {
-      setError("Please complete all fields.");
+    if (
+      !trimmedTitle ||
+      !formData.date ||
+      !formData.amount ||
+      formData.categories.length === 0
+    ) {
+      setError("Please complete all fields and pick at least one category.");
       return;
     }
     if (!Number.isInteger(amountValue) || amountValue <= 0) {
@@ -92,7 +116,7 @@ export default function TransactionsTab({ onAddTransaction }) {
       title: trimmedTitle,
       amount: amountValue,
       date: formData.date,
-      category: formData.category,
+      category: formData.categories,
       type: formData.type,
       tags: tagsArray,
       isRecurring: formData.isRecurring,
@@ -103,7 +127,7 @@ export default function TransactionsTab({ onAddTransaction }) {
       title: "",
       amount: "",
       date: "",
-      category: "Food",
+      categories: [],
       type: "expense",
       tags: "",
       isRecurring: false,
@@ -117,16 +141,18 @@ export default function TransactionsTab({ onAddTransaction }) {
     return [...transactions]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .filter((t) => {
+        const cats = categoriesOf(t);
         const q = search.toLowerCase();
         const matchSearch =
           t.title.toLowerCase().includes(q) ||
-          t.category.toLowerCase().includes(q) ||
+          cats.some((c) => c.toLowerCase().includes(q)) ||
           (t.tags || []).some((tag) => tag.toLowerCase().includes(q));
         const matchType = filterType === "all" || t.type === filterType;
         const matchCat =
           filterCategory === "all" ||
-          t.category === filterCategory ||
-          (filterCategory === "Other" && !CATEGORIES.includes(t.category));
+          cats.includes(filterCategory) ||
+          (filterCategory === "Other" &&
+            cats.every((c) => !CATEGORIES.includes(c)));
 
         // Date period filter
         // Income is not scoped to a period — it should always be counted,
@@ -204,20 +230,24 @@ export default function TransactionsTab({ onAddTransaction }) {
             />
           </div>
 
-          <div className="transaction-field">
-            <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_ICONS[c]} {c}
-                </option>
-              ))}
-            </select>
+          <div className="transaction-field transaction-field-wide">
+            <label>Category (select one or more)</label>
+            <div className="category-chip-group">
+              {CATEGORIES.map((c) => {
+                const active = formData.categories.includes(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleCategory(c)}
+                    className={`category-chip${active ? " category-chip-active" : ""}`}
+                    aria-pressed={active}
+                  >
+                    <span>{CATEGORY_ICONS[c]}</span> {c}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="transaction-field">
@@ -307,43 +337,46 @@ export default function TransactionsTab({ onAddTransaction }) {
         <p className="empty-text">No transactions found.</p>
       ) : (
         <div className="transactions-list">
-          {filtered.map((t) => (
-            <div key={t.id || t._id} className="transaction-row">
-              <div className="transaction-row-left">
-                <span className="transaction-category-icon">
-                  {CATEGORY_ICONS[t.category] || "📦"}
-                </span>
-                <div>
-                  <h4>
-                    {t.title}
-                    {t.isRecurring && (
-                      <span className="recurring-badge">🔁 Recurring</span>
-                    )}
-                  </h4>
-                  <p>
-                    {t.category} • {t.date} • {t.type}
-                    {t.tags?.length > 0 && (
-                      <span className="tag-list">
-                        {t.tags.map((tag) => (
-                          <span key={tag} className="tag-chip">
-                            {tag}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </p>
+          {filtered.map((t) => {
+            const cats = categoriesOf(t);
+            return (
+              <div key={t.id || t._id} className="transaction-row">
+                <div className="transaction-row-left">
+                  <span className="transaction-category-icon">
+                    {cats.map((c) => CATEGORY_ICONS[c] || "📦").join(" ")}
+                  </span>
+                  <div>
+                    <h4>
+                      {t.title}
+                      {t.isRecurring && (
+                        <span className="recurring-badge">🔁 Recurring</span>
+                      )}
+                    </h4>
+                    <p>
+                      {cats.join(", ")} • {t.date} • {t.type}
+                      {t.tags?.length > 0 && (
+                        <span className="tag-list">
+                          {t.tags.map((tag) => (
+                            <span key={tag} className="tag-chip">
+                              {tag}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </p>
+                  </div>
                 </div>
+                <strong
+                  className={
+                    t.type === "income" ? "amount-income" : "amount-expense"
+                  }
+                >
+                  {t.type === "income" ? "+" : "-"}
+                  {currency(t.amount)}
+                </strong>
               </div>
-              <strong
-                className={
-                  t.type === "income" ? "amount-income" : "amount-expense"
-                }
-              >
-                {t.type === "income" ? "+" : "-"}
-                {currency(t.amount)}
-              </strong>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>
