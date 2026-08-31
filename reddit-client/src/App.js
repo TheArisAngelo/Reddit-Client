@@ -29,6 +29,11 @@ function sanitize(str) {
   return str.trim().replace(/<[^>]*>/g, "");
 }
 
+function sanitizeCategory(category) {
+  if (Array.isArray(category)) return category.map((c) => sanitize(c));
+  return sanitize(category);
+}
+
 function currency(amount) {
   return `₱${Math.round(Number(amount || 0)).toLocaleString()}`;
 }
@@ -300,7 +305,7 @@ function HomePage() {
   const handleAddTransaction = async (newTransaction) => {
     const safe = {
       ...newTransaction,
-      category: sanitize(newTransaction.category),
+      category: sanitizeCategory(newTransaction.category),
       description: sanitize(newTransaction.description || ""),
     };
     try {
@@ -324,6 +329,41 @@ function HomePage() {
       }
     } catch (err) {
       console.error("Failed to add transaction", err);
+    }
+  };
+
+  const handleEditTransaction = async (updatedTransaction) => {
+    const transactionId = updatedTransaction.id || updatedTransaction._id;
+    if (!transactionId) {
+      console.error("Cannot edit transaction: missing id", updatedTransaction);
+      return;
+    }
+    const safe = {
+      ...updatedTransaction,
+      category: sanitizeCategory(updatedTransaction.category),
+      description: sanitize(updatedTransaction.description || ""),
+    };
+    try {
+      clearBudgetCache();
+      const res = await fetch(`${API}/transactions/${transactionId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(safe),
+      });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
+      const updated = await res.json();
+      if (updated && Array.isArray(updated.transactions)) {
+        setBudgetData(updated);
+        setCachedBudgetData(updated);
+      }
+    } catch (err) {
+      console.error("Failed to edit transaction", err);
     }
   };
 
@@ -623,7 +663,10 @@ function HomePage() {
             )}
 
           {activeTab === "transactions" && (
-            <TransactionsTab onAddTransaction={handleAddTransaction} />
+            <TransactionsTab
+              onAddTransaction={handleAddTransaction}
+              onEditTransaction={handleEditTransaction}
+            />
           )}
           {activeTab === "budgets" && (
             <BudgetsTab

@@ -44,7 +44,10 @@ function categoriesOf(t) {
 
 // Component
 
-export default function TransactionsTab({ onAddTransaction }) {
+export default function TransactionsTab({
+  onAddTransaction,
+  onEditTransaction,
+}) {
   const { budgetData } = useGlobalContext();
   const transactions = budgetData?.transactions || [];
 
@@ -66,6 +69,92 @@ export default function TransactionsTab({ onAddTransaction }) {
 
   // Date Period Filter
   const [filterPeriod, setFilterPeriod] = useState("week");
+
+  // Edit modal
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [editFormData, setEditFormData] = useState(null);
+  const [editError, setEditError] = useState("");
+
+  const openEditModal = (t) => {
+    setEditingTransaction(t);
+    setEditFormData({
+      title: t.title,
+      amount: String(t.amount),
+      date: t.date,
+      categories: categoriesOf(t),
+      type: t.type,
+      tags: (t.tags || []).join(", "),
+      isRecurring: !!t.isRecurring,
+    });
+    setEditError("");
+  };
+
+  const closeEditModal = () => {
+    setEditingTransaction(null);
+    setEditFormData(null);
+    setEditError("");
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const toggleEditCategory = (cat) => {
+    setEditFormData((prev) => {
+      const isSelected = prev.categories.includes(cat);
+      return {
+        ...prev,
+        categories: isSelected
+          ? prev.categories.filter((c) => c !== cat)
+          : [...prev.categories, cat],
+      };
+    });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    const trimmedTitle = editFormData.title.trim();
+    const amountValue = parseInt(editFormData.amount, 10);
+
+    if (
+      !trimmedTitle ||
+      !editFormData.date ||
+      !editFormData.amount ||
+      editFormData.categories.length === 0
+    ) {
+      setEditError(
+        "Please complete all fields and pick at least one category.",
+      );
+      return;
+    }
+    if (!Number.isInteger(amountValue) || amountValue <= 0) {
+      setEditError("Please enter a valid amount greater than 0.");
+      return;
+    }
+
+    const tagsArray = editFormData.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const updatedTransaction = {
+      ...editingTransaction,
+      title: trimmedTitle,
+      amount: amountValue,
+      date: editFormData.date,
+      category: editFormData.categories,
+      type: editFormData.type,
+      tags: tagsArray,
+      isRecurring: editFormData.isRecurring,
+    };
+
+    onEditTransaction?.(updatedTransaction);
+    closeEditModal();
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -366,17 +455,156 @@ export default function TransactionsTab({ onAddTransaction }) {
                     </p>
                   </div>
                 </div>
-                <strong
-                  className={
-                    t.type === "income" ? "amount-income" : "amount-expense"
-                  }
-                >
-                  {t.type === "income" ? "+" : "-"}
-                  {currency(t.amount)}
-                </strong>
+                <div className="transaction-row-right">
+                  <strong
+                    className={
+                      t.type === "income" ? "amount-income" : "amount-expense"
+                    }
+                  >
+                    {t.type === "income" ? "+" : "-"}
+                    {currency(t.amount)}
+                  </strong>
+                  <button
+                    type="button"
+                    className="transaction-edit-btn"
+                    onClick={() => openEditModal(t)}
+                    aria-label={`Edit ${t.title}`}
+                  >
+                    ✏️ Edit
+                  </button>
+                </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {editingTransaction && editFormData && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Transaction</h3>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={closeEditModal}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form className="transaction-form" onSubmit={handleEditSubmit}>
+              <div className="transaction-form-grid">
+                <div className="transaction-field">
+                  <label htmlFor="edit-title">Transaction Title</label>
+                  <input
+                    id="edit-title"
+                    name="title"
+                    type="text"
+                    value={editFormData.title}
+                    onChange={handleEditChange}
+                  />
+                </div>
+
+                <div className="transaction-field">
+                  <label htmlFor="edit-amount">Amount Paid</label>
+                  <input
+                    id="edit-amount"
+                    name="amount"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={editFormData.amount}
+                    onChange={handleEditChange}
+                  />
+                </div>
+
+                <div className="transaction-field">
+                  <label htmlFor="edit-date">Date</label>
+                  <input
+                    id="edit-date"
+                    name="date"
+                    type="date"
+                    value={editFormData.date}
+                    onChange={handleEditChange}
+                  />
+                </div>
+
+                <div className="transaction-field transaction-field-wide">
+                  <label>Category (select one or more)</label>
+                  <div className="category-chip-group">
+                    {CATEGORIES.map((c) => {
+                      const active = editFormData.categories.includes(c);
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => toggleEditCategory(c)}
+                          className={`category-chip${active ? " category-chip-active" : ""}`}
+                          aria-pressed={active}
+                        >
+                          <span>{CATEGORY_ICONS[c]}</span> {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="transaction-field">
+                  <label htmlFor="edit-type">Type</label>
+                  <select
+                    id="edit-type"
+                    name="type"
+                    value={editFormData.type}
+                    onChange={handleEditChange}
+                  >
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                  </select>
+                </div>
+
+                <div className="transaction-field">
+                  <label htmlFor="edit-tags">Tags (comma-separated)</label>
+                  <input
+                    id="edit-tags"
+                    name="tags"
+                    type="text"
+                    value={editFormData.tags}
+                    onChange={handleEditChange}
+                  />
+                </div>
+              </div>
+
+              <label className="recurring-label">
+                <input
+                  type="checkbox"
+                  name="isRecurring"
+                  checked={editFormData.isRecurring}
+                  onChange={handleEditChange}
+                />
+                Recurring transaction (salary, subscription, etc.)
+              </label>
+
+              {editError && (
+                <p className="transaction-form-error">{editError}</p>
+              )}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={closeEditModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="transaction-submit-btn">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </section>

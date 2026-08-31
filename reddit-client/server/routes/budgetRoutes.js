@@ -10,6 +10,16 @@ const CACHE_KEY = "/api/budget";
 // Helper
 const userCacheKey = (req) => `${req.user.userId}:${CACHE_KEY}`;
 
+// Helper: find a transaction subdocument by either Mongo's _id or the
+// client-generated `id` (Date.now()) field, since transactions created
+// via POST /transactions carry both.
+function findTransaction(budgetData, id) {
+  return (
+    budgetData.transactions.id(id) ||
+    budgetData.transactions.find((t) => String(t.id) === String(id))
+  );
+}
+
 router.get("/", authMiddleware, cache, async (req, res) => {
   try {
     let budgetData = await BudgetData.findOne({ userId: req.user.userId });
@@ -73,6 +83,53 @@ router.post("/transactions", authMiddleware, async (req, res) => {
     res.json(budgetData);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
+  }
+});
+
+router.put("/transactions/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const budgetData = await BudgetData.findOne({ userId: req.user.userId });
+    if (!budgetData) {
+      return res.status(404).json({ message: "Budget data not found" });
+    }
+
+    const transaction = findTransaction(budgetData, id);
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    // Reverse the old transaction's effect on the balance before applying
+    // the edit, since amount/type may have changed.
+    if (transaction.type === "income") {
+      budgetData.currentBalance -= transaction.amount;
+    } else {
+      budgetData.currentBalance += transaction.amount;
+    }
+
+    transaction.title = updates.title ?? transaction.title;
+    transaction.amount = updates.amount ?? transaction.amount;
+    transaction.date = updates.date ?? transaction.date;
+    transaction.category = updates.category ?? transaction.category;
+    transaction.type = updates.type ?? transaction.type;
+    transaction.tags = updates.tags ?? transaction.tags;
+    transaction.isRecurring = updates.isRecurring ?? transaction.isRecurring;
+
+    // Apply the updated transaction's effect on the balance.
+    if (transaction.type === "income") {
+      budgetData.currentBalance += transaction.amount;
+    } else {
+      budgetData.currentBalance -= transaction.amount;
+    }
+
+    await budgetData.save();
+
+    cache.del(userCacheKey(req)); // ✅
+    res.json(budgetData);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 });
 
