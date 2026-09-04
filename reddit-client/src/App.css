@@ -4503,19 +4503,6 @@ body:has(.light-mode) {
    DELETE MODAL
 ========================= */
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(2, 6, 23, 0.7);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
 .modal-box {
   background: var(--panel);
   border: 1px solid rgba(251, 113, 133, 0.25);
@@ -4993,24 +4980,27 @@ body:has(.light-mode) {
 .modal-overlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(2, 6, 15, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99999;
   padding: 20px;
 }
 
 .modal-content {
-  background: #0f1729;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 16px;
-  padding: 24px;
   width: 100%;
   max-width: 560px;
   max-height: 90vh;
   overflow-y: auto;
+  background: #0f1729;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  padding: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
